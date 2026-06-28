@@ -51,4 +51,28 @@ public class AuthService {
         );
 
     }
+
+    // Login
+    public AuthResponse login(LoginRequest request){
+        String normalizedEmail = request.email().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password."));
+
+        if(user.getProvider() != AuthProvider.LOCAL){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please login with your original provider");
+        }
+
+        if(!passwordEncoder.matches(request.password(), user.getPasswordHash())){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+
+        return new AuthResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getRole(),
+                user.getProvider()
+        );
+    }
 }
