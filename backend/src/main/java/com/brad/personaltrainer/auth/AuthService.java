@@ -1,0 +1,54 @@
+package com.brad.personaltrainer.auth;
+
+import com.brad.personaltrainer.user.AuthProvider;
+import com.brad.personaltrainer.user.User;
+import com.brad.personaltrainer.user.UserRepository;
+import com.brad.personaltrainer.user.UserRole;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDateTime;
+
+@Service
+public class AuthService {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    //Constructor
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder){
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public AuthResponse register(RegisterRequest request){
+        String normalizedEmail = request.email().trim().toLowerCase();
+        // check whether if the account is existed
+        if(userRepository.existsByEmail(normalizedEmail)){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered.");
+        }
+        // Set user detail
+        User user = new User();
+        user.setEmail(normalizedEmail);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setUsername(request.username().trim());
+        user.setRole(UserRole.TRAINER);
+        user.setProvider(AuthProvider.LOCAL);
+        user.setProviderId(null);
+        user.setProfileImageUrl(null);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        // Store into repository
+        User savedUser= userRepository.save(user);
+        // return user info
+        return new AuthResponse(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getUsername(),
+                savedUser.getRole(),
+                savedUser.getProvider()
+        );
+
+    }
+}
