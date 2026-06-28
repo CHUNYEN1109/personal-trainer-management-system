@@ -17,6 +17,7 @@ public class SecurityConfig {
                 // Define which endpoints are public and which require login
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
