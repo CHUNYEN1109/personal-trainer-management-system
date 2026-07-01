@@ -1,7 +1,9 @@
 package com.brad.personaltrainer.auth;
 
+import com.brad.personaltrainer.user.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
@@ -14,7 +16,10 @@ public record RegisterRequest(
         String password,
 
         @NotBlank(message = "User name is required" )
-        String username
+        String username,
+
+        @NotNull(message = "Role is required")
+        UserRole role
 ) {
 
 }

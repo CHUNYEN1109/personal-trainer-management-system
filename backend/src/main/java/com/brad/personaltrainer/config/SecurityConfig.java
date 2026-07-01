@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/test/client").hasRole("CLIENT")
+                        .requestMatchers("/api/test/trainer").hasRole("TRAINER")
                         .anyRequest().authenticated()
                 )
 

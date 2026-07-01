@@ -35,7 +35,7 @@ public class AuthService {
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setUsername(request.username().trim());
-        user.setRole(UserRole.TRAINER);
+        user.setRole(request.role());
         user.setProvider(AuthProvider.LOCAL);
         user.setProviderId(null);
         user.setProfileImageUrl(null);
