@@ -15,11 +15,13 @@ import java.time.LocalDateTime;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     //Constructor
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder){
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public AuthResponse register(RegisterRequest request){
@@ -42,12 +44,14 @@ public class AuthService {
         // Store into repository
         User savedUser= userRepository.save(user);
         // return user info
+        String token = jwtService.generateToken(savedUser);
         return new AuthResponse(
                 savedUser.getId(),
                 savedUser.getEmail(),
                 savedUser.getUsername(),
                 savedUser.getRole(),
-                savedUser.getProvider()
+                savedUser.getProvider(),
+                token
         );
 
     }
@@ -67,12 +71,15 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
+        String token = jwtService.generateToken(user);
+
         return new AuthResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole(),
-                user.getProvider()
+                user.getProvider(),
+                token
         );
     }
 }

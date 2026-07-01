@@ -8,6 +8,7 @@ public record AuthResponse(
         String email,
         String username,
         UserRole role,
-        AuthProvider provider
+        AuthProvider provider,
+        String token
 ) {
 }
