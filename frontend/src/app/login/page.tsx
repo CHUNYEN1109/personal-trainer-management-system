@@ -1,11 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getCurrentUser, loginUser } from "@/lib/api/auth";
 import type { CurrentUserResponse } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(
@@ -38,6 +40,12 @@ export default function LoginPage() {
 
       setCurrentUser(user);
       setMessage("Login successful.");
+
+      if (user.role === "CLIENT") {
+        router.push("/client/dashboard");
+      } else {
+        router.push("/trainer/dashboard");
+      }
     } catch (exception) {
       const errorMessage =
         exception instanceof Error ? exception.message : "Login failed.";

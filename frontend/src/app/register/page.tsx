@@ -4,8 +4,10 @@ import { FormEvent, useState } from "react";
 import { getCurrentUser, registerUser } from "@/lib/api/auth";
 import type { CurrentUserResponse, UserRole } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { refreshCurrentUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,6 +44,12 @@ export default function RegisterPage() {
 
       setCurrentUser(user);
       setMessage("Register successful.");
+
+      if (user.role === "CLIENT") {
+        router.push("/client/dashboard");
+      } else {
+        router.push("/trainer/dashboard");
+      }
     } catch (exception) {
       const errorMessage =
         exception instanceof Error ? exception.message : "Register failed.";
