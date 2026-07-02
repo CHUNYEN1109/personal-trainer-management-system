@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { getCurrentUser, loginUser } from "@/lib/api/auth";
 import type { CurrentUserResponse } from "@/types/auth";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(
     null,
   );
+  const { refreshCurrentUser } = useAuth();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +31,8 @@ export default function LoginPage() {
       });
 
       localStorage.setItem("authToken", authResponse.token);
+
+      await refreshCurrentUser();
 
       const user = await getCurrentUser(authResponse.token);
 

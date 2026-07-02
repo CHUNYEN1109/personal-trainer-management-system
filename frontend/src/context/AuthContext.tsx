@@ -3,6 +3,7 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -28,9 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     null,
   );
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  async function loadCurrentUser(savedToken: string) {
+  const loadCurrentUser = useCallback(async (savedToken: string) => {
     try {
       setIsLoading(true);
 
@@ -45,9 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
-  async function refreshCurrentUser() {
+  const refreshCurrentUser = useCallback(async () => {
     const savedToken = localStorage.getItem(AUTH_TOKEN_KEY);
 
     if (!savedToken) {
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await loadCurrentUser(savedToken);
-  }
+  }, [loadCurrentUser]);
 
   function logout() {
     localStorage.removeItem(AUTH_TOKEN_KEY);
@@ -67,14 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const savedToken = localStorage.getItem(AUTH_TOKEN_KEY);
-
-    if (!savedToken) {
-      return;
-    }
-
-    void Promise.resolve().then(() => loadCurrentUser(savedToken));
-  }, []);
+    void Promise.resolve().then(() => refreshCurrentUser());
+  }, [refreshCurrentUser]);
 
   const value: AuthContextValue = {
     currentUser,
