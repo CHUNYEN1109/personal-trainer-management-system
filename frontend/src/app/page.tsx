@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthStatus from "@/components/AuthStatus";
 
 export default function Home() {
   return (
@@ -31,6 +32,9 @@ export default function Home() {
           >
             Register
           </Link>
+        </div>
+        <div className="mt-8">
+          <AuthStatus />
         </div>
       </section>
     </main>
