@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class TrainingSlotService {
@@ -17,6 +18,7 @@ public class TrainingSlotService {
         this.trainingSlotRepository = trainingSlotRepository;
     }
 
+    // Methods for business logic
     public TrainingSlotResponse createSlot(User trainer, CreateTrainingSlotRequest request) {
         if (trainer.getRole() != UserRole.TRAINER) {
             throw new ResponseStatusException(
@@ -42,6 +44,13 @@ public class TrainingSlotService {
         TrainingSlot savedSlot = trainingSlotRepository.save(trainingSlot);
 
         return toResponse(savedSlot);
+    }
+
+    public List<TrainingSlotResponse> getAvailableSlots() {
+        return trainingSlotRepository.findByStatus(TrainingSlotStatus.AVAILABLE)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private TrainingSlotResponse toResponse(TrainingSlot trainingSlot) {
