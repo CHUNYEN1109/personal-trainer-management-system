@@ -79,6 +79,20 @@ public class BookingService {
                 .toList();
     }
 
+    public List<BookingResponse> getTrainerBookings(User trainer) {
+        if (trainer.getRole() != UserRole.TRAINER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only trainers can view their bookings"
+            );
+        }
+
+        return bookingRepository.findBySlotTrainer(trainer)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private BookingResponse toResponse(Booking booking) {
         TrainingSlot slot = booking.getSlot();
 

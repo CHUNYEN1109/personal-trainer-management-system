@@ -10,4 +10,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findBySlot(TrainingSlot slot);
 
     List<Booking> findByClient(User client);
+
+    List<Booking> findBySlotTrainer(User trainer);
 }
