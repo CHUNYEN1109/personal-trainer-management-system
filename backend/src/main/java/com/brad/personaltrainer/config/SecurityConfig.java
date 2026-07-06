@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/test/client").hasRole("CLIENT")
                         .requestMatchers("/api/test/trainer").hasRole("TRAINER")
+                        .requestMatchers("/api/trainer/**").hasRole("TRAINER")
                         .anyRequest().authenticated()
                 )
 
