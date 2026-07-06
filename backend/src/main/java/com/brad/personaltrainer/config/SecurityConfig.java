@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/test/client").hasRole("CLIENT")
                         .requestMatchers("/api/test/trainer").hasRole("TRAINER")
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")
+                        .requestMatchers("/api/client/**").hasRole("CLIENT")
                         .anyRequest().authenticated()
                 )
 
