@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class BookingService {
@@ -62,6 +63,20 @@ public class BookingService {
         trainingSlotRepository.save(slot);
 
         return toResponse(savedBooking);
+    }
+
+    public List<BookingResponse> getClientBookings(User client) {
+        if (client.getRole() != UserRole.CLIENT) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only clients can view their bookings"
+            );
+        }
+
+        return bookingRepository.findByClient(client)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private BookingResponse toResponse(Booking booking) {

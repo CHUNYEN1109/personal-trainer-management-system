@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/client/bookings")
@@ -24,5 +25,11 @@ public class BookingController {
     ) {
         User client = (User) authentication.getPrincipal();
         return bookingService.createBooking(client, request);
+    }
+
+    @GetMapping
+    public List<BookingResponse> getClientBookings(Authentication authentication) {
+        User client = (User) authentication.getPrincipal();
+        return bookingService.getClientBookings(client);
     }
 }
