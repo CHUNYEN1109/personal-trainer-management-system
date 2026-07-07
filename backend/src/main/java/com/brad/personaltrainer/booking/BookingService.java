@@ -8,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BookingService {
@@ -23,6 +24,7 @@ public class BookingService {
         this.trainingSlotRepository = trainingSlotRepository;
     }
 
+    @Transactional
     public BookingResponse createBooking(User client, CreateBookingRequest request) {
         if (client.getRole() != UserRole.CLIENT) {
             throw new ResponseStatusException(
@@ -65,6 +67,7 @@ public class BookingService {
         return toResponse(savedBooking);
     }
 
+    @Transactional(readOnly = true)
     public List<BookingResponse> getClientBookings(User client) {
         if (client.getRole() != UserRole.CLIENT) {
             throw new ResponseStatusException(
@@ -79,6 +82,7 @@ public class BookingService {
                 .toList();
     }
 
+    @Transactional
     public BookingResponse confirmBooking(User trainer, Long bookingId) {
         Booking booking = getTrainerPendingBooking(trainer, bookingId);
 
@@ -89,6 +93,7 @@ public class BookingService {
         return toResponse(savedBooking);
     }
 
+    @Transactional
     public BookingResponse rejectBooking(User trainer, Long bookingId) {
         Booking booking = getTrainerPendingBooking(trainer, bookingId);
 
@@ -101,6 +106,7 @@ public class BookingService {
         return toResponse(savedBooking);
     }
 
+    @Transactional
     public BookingResponse completeBooking(User trainer, Long bookingId) {
         Booking booking = getTrainerConfirmedBooking(trainer, bookingId);
 
@@ -173,6 +179,7 @@ public class BookingService {
         return booking;
     }
 
+    @Transactional(readOnly = true)
     public List<BookingResponse> getTrainerBookings(User trainer) {
         if (trainer.getRole() != UserRole.TRAINER) {
             throw new ResponseStatusException(
