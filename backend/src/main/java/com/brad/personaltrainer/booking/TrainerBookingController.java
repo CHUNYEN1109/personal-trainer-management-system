@@ -2,9 +2,7 @@ package com.brad.personaltrainer.booking;
 
 import com.brad.personaltrainer.user.User;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,5 +20,23 @@ public class TrainerBookingController {
     public List<BookingResponse> getTrainerBookings(Authentication authentication) {
         User trainer = (User) authentication.getPrincipal();
         return bookingService.getTrainerBookings(trainer);
+    }
+
+    @PatchMapping("/{bookingId}/confirm")
+    public BookingResponse confirmBooking(
+            Authentication authentication,
+            @PathVariable Long bookingId
+    ) {
+        User trainer = (User) authentication.getPrincipal();
+        return bookingService.confirmBooking(trainer, bookingId);
+    }
+
+    @PatchMapping("/{bookingId}/reject")
+    public BookingResponse rejectBooking(
+            Authentication authentication,
+            @PathVariable Long bookingId
+    ) {
+        User trainer = (User) authentication.getPrincipal();
+        return bookingService.rejectBooking(trainer, bookingId);
     }
 }

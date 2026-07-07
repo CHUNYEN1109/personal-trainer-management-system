@@ -54,7 +54,7 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setClient(client);
         booking.setSlot(slot);
-        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setStatus(BookingStatus.PENDING);
         booking.setCreatedAt(LocalDateTime.now());
 
         slot.setStatus(TrainingSlotStatus.BOOKED);
@@ -77,6 +77,59 @@ public class BookingService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public BookingResponse confirmBooking(User trainer, Long bookingId) {
+        Booking booking = getTrainerPendingBooking(trainer, bookingId);
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        return toResponse(savedBooking);
+    }
+
+    public BookingResponse rejectBooking(User trainer, Long bookingId) {
+        Booking booking = getTrainerPendingBooking(trainer, bookingId);
+
+        booking.setStatus(BookingStatus.REJECTED);
+        booking.getSlot().setStatus(TrainingSlotStatus.AVAILABLE);
+
+        Booking savedBooking = bookingRepository.save(booking);
+        trainingSlotRepository.save(booking.getSlot());
+
+        return toResponse(savedBooking);
+    }
+
+    private Booking getTrainerPendingBooking(User trainer, Long bookingId) {
+        if (trainer.getRole() != UserRole.TRAINER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only trainers can manage bookings"
+            );
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Booking not found"
+                ));
+
+        if (!booking.getSlot().getTrainer().getId().equals(trainer.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You can only manage bookings for your own slots"
+            );
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only pending bookings can be confirmed or rejected"
+            );
+        }
+
+        return booking;
     }
 
     public List<BookingResponse> getTrainerBookings(User trainer) {
