@@ -39,4 +39,13 @@ public class TrainerBookingController {
         User trainer = (User) authentication.getPrincipal();
         return bookingService.rejectBooking(trainer, bookingId);
     }
+
+    @PatchMapping("/{bookingId}/complete")
+    public BookingResponse completeBooking(
+            Authentication authentication,
+            @PathVariable Long bookingId
+    ) {
+        User trainer = (User) authentication.getPrincipal();
+        return bookingService.completeBooking(trainer, bookingId);
+    }
 }

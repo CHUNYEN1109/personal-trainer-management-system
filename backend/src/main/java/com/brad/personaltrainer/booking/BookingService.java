@@ -101,6 +101,16 @@ public class BookingService {
         return toResponse(savedBooking);
     }
 
+    public BookingResponse completeBooking(User trainer, Long bookingId) {
+        Booking booking = getTrainerConfirmedBooking(trainer, bookingId);
+
+        booking.setStatus(BookingStatus.COMPLETED);
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        return toResponse(savedBooking);
+    }
+
     private Booking getTrainerPendingBooking(User trainer, Long bookingId) {
         if (trainer.getRole() != UserRole.TRAINER) {
             throw new ResponseStatusException(
@@ -126,6 +136,37 @@ public class BookingService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Only pending bookings can be confirmed or rejected"
+            );
+        }
+
+        return booking;
+    }
+
+    private Booking getTrainerConfirmedBooking(User trainer, Long bookingId) {
+        if (trainer.getRole() != UserRole.TRAINER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only trainers can complete bookings"
+            );
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Booking not found"
+                ));
+
+        if (!booking.getSlot().getTrainer().getId().equals(trainer.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You can only complete bookings for your own slots"
+            );
+        }
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only confirmed bookings can be completed"
             );
         }
 
