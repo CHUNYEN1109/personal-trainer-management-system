@@ -43,6 +43,17 @@ export async function createTrainingSlot(
   return handleResponse<TrainingSlotResponse>(response);
 }
 
+export async function getTrainerSlots(
+  token: string,
+): Promise<TrainingSlotResponse[]> {
+  const response = await fetch(`${API_BASE_URL}/api/trainer/slots`, {
+    method: "GET",
+    headers: authHeaders(token),
+  });
+
+  return handleResponse<TrainingSlotResponse[]>(response);
+}
+
 export async function getAvailableSlots(
   token: string,
 ): Promise<TrainingSlotResponse[]> {

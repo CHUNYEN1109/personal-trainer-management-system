@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/trainer/slots")
 public class TrainingSlotController {
@@ -25,5 +27,12 @@ public class TrainingSlotController {
         User trainer = (User) authentication.getPrincipal();
 
         return trainingSlotService.createSlot(trainer, request);
+    }
+
+    @GetMapping
+    public List<TrainingSlotResponse> getTrainerSlots(Authentication authentication) {
+        User trainer = (User) authentication.getPrincipal();
+
+        return trainingSlotService.getTrainerSlots(trainer);
     }
 }

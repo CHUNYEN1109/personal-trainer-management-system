@@ -53,6 +53,20 @@ public class TrainingSlotService {
                 .toList();
     }
 
+    public List<TrainingSlotResponse> getTrainerSlots(User trainer) {
+        if (trainer.getRole() != UserRole.TRAINER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only trainers can view their training slots"
+            );
+        }
+
+        return trainingSlotRepository.findByTrainer(trainer)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private TrainingSlotResponse toResponse(TrainingSlot trainingSlot) {
         return new TrainingSlotResponse(
                 trainingSlot.getId(),

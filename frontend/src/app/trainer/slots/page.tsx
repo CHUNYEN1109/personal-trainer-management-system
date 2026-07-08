@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { createTrainingSlot } from "@/lib/api/bookings";
+import { createTrainingSlot, getTrainerSlots } from "@/lib/api/bookings";
+import type { TrainingSlotResponse } from "@/types/bookings";
 
 function toLocalDateTimeValue(date: Date) {
   const timezoneOffset = date.getTimezoneOffset() * 60000;
@@ -28,15 +29,58 @@ function getDefaultEndTime() {
   return toLocalDateTimeValue(defaultEndTime);
 }
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("en-IE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function getStatusBadgeClass(status: string) {
+  switch (status) {
+    case "AVAILABLE":
+      return "border-green-300/30 bg-green-400/10 text-green-300";
+    case "BOOKED":
+      return "border-yellow-300/30 bg-yellow-400/10 text-yellow-300";
+    case "CANCELLED":
+      return "border-red-300/30 bg-red-400/10 text-red-300";
+    default:
+      return "border-white/20 bg-white/10 text-gray-200";
+  }
+}
+
 export default function TrainerSlotsPage() {
   const router = useRouter();
   const { currentUser, token, isLoading } = useAuth();
 
   const [startTime, setStartTime] = useState(getDefaultStartTime);
   const [endTime, setEndTime] = useState(getDefaultEndTime);
+  const [trainerSlots, setTrainerSlots] = useState<TrainingSlotResponse[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const loadTrainerSlots = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setIsLoadingSlots(true);
+      const slots = await getTrainerSlots(token);
+      setTrainerSlots(slots);
+    } catch (exception) {
+      const errorMessage =
+        exception instanceof Error
+          ? exception.message
+          : "Failed to load training slots.";
+
+      setError(errorMessage);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  }, [token]);
 
   useEffect(() => {
     if (isLoading) {
@@ -50,8 +94,15 @@ export default function TrainerSlotsPage() {
 
     if (currentUser.role !== "TRAINER") {
       router.push("/unauthorized");
+      return;
     }
-  }, [currentUser, isLoading, router, token]);
+
+    const timeoutId = window.setTimeout(() => {
+      void loadTrainerSlots();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [currentUser, isLoading, loadTrainerSlots, router, token]);
 
   async function handleCreateSlot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,6 +133,8 @@ export default function TrainerSlotsPage() {
       });
 
       setMessage("Training slot created successfully.");
+
+      await loadTrainerSlots();
 
       const nextStartTime = new Date(
         new Date(startTime).getTime() + 60 * 60 * 1000,
@@ -120,7 +173,7 @@ export default function TrainerSlotsPage() {
 
   return (
     <main className="min-h-screen bg-[#0B192C] px-6 py-10 text-[#E0E0E0]">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <header className="mb-8 rounded-2xl border border-white/10 bg-[#1A1A1A]/80 p-8 shadow-2xl shadow-black/40 backdrop-blur">
           <p className="mb-3 text-sm font-medium uppercase tracking-[0.25em] text-cyan-300">
             Trainer Slots
@@ -199,6 +252,66 @@ export default function TrainerSlotsPage() {
               {isSubmitting ? "Creating..." : "Create available slot"}
             </button>
           </form>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-white/10 bg-[#1A1A1A]/80 p-6 shadow-2xl shadow-black/30 backdrop-blur">
+          <div className="mb-6">
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-cyan-300">
+              Your slots
+            </p>
+            <h2 className="mt-1 text-xl font-semibold text-white">
+              Created training slots
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[#E0E0E0]/80">
+              Review the training times you have created for clients to book.
+            </p>
+          </div>
+
+          {isLoadingSlots ? (
+            <p className="rounded-xl border border-white/10 bg-white/5 p-5 text-sm text-[#E0E0E0]/80">
+              Loading your slots...
+            </p>
+          ) : trainerSlots.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-sm text-[#E0E0E0]/80">
+              <p className="font-medium text-white">
+                You have not created any slots yet.
+              </p>
+              <p className="mt-2">
+                Use the form above to create your first available training time.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {trainerSlots.map((slot) => (
+                <article
+                  key={slot.id}
+                  className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-cyan-300/40"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {formatDateTime(slot.startTime)}
+                      </p>
+                      <p className="mt-1 text-sm text-[#E0E0E0]/75">
+                        Ends {formatDateTime(slot.endTime)}
+                      </p>
+                      <p className="mt-2 text-xs text-[#E0E0E0]/60">
+                        Slot ID: {slot.id}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                        slot.status,
+                      )}`}
+                    >
+                      {slot.status}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </main>
