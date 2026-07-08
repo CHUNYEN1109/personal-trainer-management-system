@@ -61,6 +61,13 @@ export default function ClientDashboardPage() {
           to view available trainer slots and manage their bookings here.
         </p>
 
+        <Link
+          href="/client/bookings"
+          className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
+        >
+          View and book training slots
+        </Link>
+
         <div className="mb-8 rounded-lg border border-white/10 bg-white/5 p-5">
           <p className="mb-2 text-sm">
             <span className="font-semibold text-white">Email:</span>{" "}
