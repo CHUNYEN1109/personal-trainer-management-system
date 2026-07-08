@@ -57,16 +57,25 @@ export default function TrainerDashboardPage() {
         </h1>
 
         <p className="mb-8 text-sm leading-6 text-[#E0E0E0]">
-          This is the trainer dashboard. In the next phase, trainers will be
-          able to create available slots and manage client bookings here.
+          This is the trainer dashboard. Trainers can create available slots and
+          manage client bookings here.
         </p>
 
-        <Link
-          href="/trainer/bookings"
-          className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-        >
-          Manage bookings
-        </Link>
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/trainer/bookings"
+            className="rounded-lg bg-cyan-300 px-5 py-2.5 text-center text-sm font-semibold text-[#0B192C] transition hover:bg-cyan-200"
+          >
+            Manage bookings
+          </Link>
+
+          <Link
+            href="/trainer/slots"
+            className="rounded-lg border border-cyan-300/40 px-5 py-2.5 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-300/10"
+          >
+            Manage slots
+          </Link>
+        </div>
 
         <div className="mb-8 rounded-lg border border-white/10 bg-white/5 p-5">
           <p className="mb-2 text-sm">

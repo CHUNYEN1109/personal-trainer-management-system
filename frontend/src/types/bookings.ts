@@ -17,6 +17,11 @@ export type TrainingSlotResponse = {
   createdAt: string;
 };
 
+export type CreateTrainingSlotRequest = {
+  startTime: string;
+  endTime: string;
+};
+
 export type CreateBookingRequest = {
   slotId: number;
 };

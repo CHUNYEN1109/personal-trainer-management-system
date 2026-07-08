@@ -2,6 +2,7 @@ import type {
   BookingResponse,
   CreateBookingRequest,
   TrainingSlotResponse,
+  CreateTrainingSlotRequest,
 } from "@/types/bookings";
 
 const API_BASE_URL =
@@ -27,6 +28,19 @@ function authHeaders(token: string) {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
+}
+
+export async function createTrainingSlot(
+  token: string,
+  data: CreateTrainingSlotRequest,
+): Promise<TrainingSlotResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/trainer/slots`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse<TrainingSlotResponse>(response);
 }
 
 export async function getAvailableSlots(
@@ -119,3 +133,4 @@ export async function completeBooking(
 
   return handleResponse<BookingResponse>(response);
 }
+
