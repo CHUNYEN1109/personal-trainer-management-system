@@ -47,7 +47,7 @@ public class TrainingSlotService {
     }
 
     public List<TrainingSlotResponse> getAvailableSlots() {
-        return trainingSlotRepository.findByStatus(TrainingSlotStatus.AVAILABLE)
+        return trainingSlotRepository.findByStatusOrderByStartTimeAsc(TrainingSlotStatus.AVAILABLE)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -61,7 +61,7 @@ public class TrainingSlotService {
             );
         }
 
-        return trainingSlotRepository.findByTrainer(trainer)
+        return trainingSlotRepository.findByTrainerOrderByStartTimeAsc(trainer)
                 .stream()
                 .map(this::toResponse)
                 .toList();

@@ -76,7 +76,7 @@ public class BookingService {
             );
         }
 
-        return bookingRepository.findByClient(client)
+        return bookingRepository.findByClientOrderBySlotStartTimeAsc(client)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -227,7 +227,7 @@ public class BookingService {
             );
         }
 
-        return bookingRepository.findBySlotTrainer(trainer)
+        return bookingRepository.findBySlotTrainerOrderBySlotStartTimeAsc(trainer)
                 .stream()
                 .map(this::toResponse)
                 .toList();
