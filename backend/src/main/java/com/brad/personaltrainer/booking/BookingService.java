@@ -83,6 +83,45 @@ public class BookingService {
     }
 
     @Transactional
+    public BookingResponse cancelClientBooking(User client, Long bookingId) {
+        if (client.getRole() != UserRole.CLIENT) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only clients can cancel bookings"
+            );
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Booking not found"
+                ));
+
+        if (!booking.getClient().getId().equals(client.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You can only cancel your own bookings"
+            );
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING
+                && booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only pending or confirmed bookings can be cancelled"
+            );
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.getSlot().setStatus(TrainingSlotStatus.AVAILABLE);
+
+        Booking savedBooking = bookingRepository.save(booking);
+        trainingSlotRepository.save(booking.getSlot());
+
+        return toResponse(savedBooking);
+    }
+
+    @Transactional
     public BookingResponse confirmBooking(User trainer, Long bookingId) {
         Booking booking = getTrainerPendingBooking(trainer, bookingId);
 
