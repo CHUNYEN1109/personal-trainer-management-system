@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface TrainingSlotRepository extends JpaRepository<TrainingSlot, Long>{
-    List<TrainingSlot> findByTrainer(User trainer);
+    List<TrainingSlot> findByTrainerOrderByStartTimeAsc(User trainer);
 
-    List<TrainingSlot> findByStatus(TrainingSlotStatus status);
+    List<TrainingSlot> findByStatusOrderByStartTimeAsc(TrainingSlotStatus status);
 }
