@@ -35,4 +35,14 @@ public class TrainingSlotController {
 
         return trainingSlotService.getTrainerSlots(trainer);
     }
+
+    @PatchMapping("/{slotId}/cancel")
+    public TrainingSlotResponse cancelSlot(
+            Authentication authentication,
+            @PathVariable Long slotId
+    ) {
+        User trainer = (User) authentication.getPrincipal();
+
+        return trainingSlotService.cancelSlot(trainer, slotId);
+    }
 }

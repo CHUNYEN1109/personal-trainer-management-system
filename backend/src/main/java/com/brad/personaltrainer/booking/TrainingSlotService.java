@@ -67,6 +67,40 @@ public class TrainingSlotService {
                 .toList();
     }
 
+    public TrainingSlotResponse cancelSlot(User trainer, Long slotId) {
+        if (trainer.getRole() != UserRole.TRAINER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only trainers can cancel training slots"
+            );
+        }
+
+        TrainingSlot trainingSlot = trainingSlotRepository.findById(slotId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Training slot not found"
+                ));
+
+        if (!trainingSlot.getTrainer().getId().equals(trainer.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You can only cancel your own training slots"
+            );
+        }
+
+        if (trainingSlot.getStatus() != TrainingSlotStatus.AVAILABLE) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only available slots can be cancelled"
+            );
+        }
+
+        trainingSlot.setStatus(TrainingSlotStatus.CANCELLED);
+        TrainingSlot savedSlot = trainingSlotRepository.save(trainingSlot);
+
+        return toResponse(savedSlot);
+    }
+
     private TrainingSlotResponse toResponse(TrainingSlot trainingSlot) {
         return new TrainingSlotResponse(
                 trainingSlot.getId(),
