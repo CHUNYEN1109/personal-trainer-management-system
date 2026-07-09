@@ -54,6 +54,21 @@ export async function getTrainerSlots(
   return handleResponse<TrainingSlotResponse[]>(response);
 }
 
+export async function cancelTrainingSlot(
+  token: string,
+  slotId: number,
+): Promise<TrainingSlotResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/trainer/slots/${slotId}/cancel`,
+    {
+      method: "PATCH",
+      headers: authHeaders(token),
+    },
+  );
+
+  return handleResponse<TrainingSlotResponse>(response);
+}
+
 export async function getAvailableSlots(
   token: string,
 ): Promise<TrainingSlotResponse[]> {

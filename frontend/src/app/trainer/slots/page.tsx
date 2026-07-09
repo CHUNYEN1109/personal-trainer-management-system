@@ -3,7 +3,11 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { createTrainingSlot, getTrainerSlots } from "@/lib/api/bookings";
+import {
+  cancelTrainingSlot,
+  createTrainingSlot,
+  getTrainerSlots,
+} from "@/lib/api/bookings";
 import type { TrainingSlotResponse } from "@/types/bookings";
 
 function toLocalDateTimeValue(date: Date) {
@@ -155,6 +159,38 @@ export default function TrainerSlotsPage() {
     }
   }
 
+  async function handleCancelSlot(slotId: number) {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this training slot?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setMessage("");
+      setError("");
+
+      await cancelTrainingSlot(token, slotId);
+
+      setMessage("Training slot cancelled successfully.");
+      await loadTrainerSlots();
+    } catch (exception) {
+      const errorMessage =
+        exception instanceof Error
+          ? exception.message
+          : "Failed to cancel training slot.";
+
+      setError(errorMessage);
+    }
+  }
+
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0B192C] px-6 text-center text-[#E0E0E0]">
@@ -300,13 +336,25 @@ export default function TrainerSlotsPage() {
                       </p>
                     </div>
 
-                    <span
-                      className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
-                        slot.status,
-                      )}`}
-                    >
-                      {slot.status}
-                    </span>
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
+                      <span
+                        className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                          slot.status,
+                        )}`}
+                      >
+                        {slot.status}
+                      </span>
+
+                      {slot.status === "AVAILABLE" && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancelSlot(slot.id)}
+                          className="rounded-lg border border-red-300/30 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-400/10"
+                        >
+                          Cancel slot
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))}
