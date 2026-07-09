@@ -93,6 +93,7 @@ export async function createBooking(
   return handleResponse<BookingResponse>(response);
 }
 
+
 export async function getClientBookings(
   token: string,
 ): Promise<BookingResponse[]> {
@@ -102,6 +103,21 @@ export async function getClientBookings(
   });
 
   return handleResponse<BookingResponse[]>(response);
+}
+
+export async function cancelClientBooking(
+  token: string,
+  bookingId: number,
+): Promise<BookingResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/client/bookings/${bookingId}/cancel`,
+    {
+      method: "PATCH",
+      headers: authHeaders(token),
+    },
+  );
+
+  return handleResponse<BookingResponse>(response);
 }
 
 export async function getTrainerBookings(

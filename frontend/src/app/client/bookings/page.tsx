@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
+  cancelClientBooking,
   createBooking,
   getAvailableSlots,
   getClientBookings,
@@ -46,6 +47,9 @@ export default function ClientBookingsPage() {
   const [actionLoadingSlotId, setActionLoadingSlotId] = useState<number | null>(
     null,
   );
+  const [actionLoadingBookingId, setActionLoadingBookingId] = useState<
+    number | null
+  >(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -126,6 +130,41 @@ export default function ClientBookingsPage() {
       setError(errorMessage);
     } finally {
       setActionLoadingSlotId(null);
+    }
+  }
+
+  async function handleCancelBooking(bookingId: number) {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this booking?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoadingBookingId(bookingId);
+      setMessage("");
+      setError("");
+
+      await cancelClientBooking(token, bookingId);
+
+      setMessage("Booking cancelled successfully.");
+      await loadBookingData();
+    } catch (exception) {
+      const errorMessage =
+        exception instanceof Error
+          ? exception.message
+          : "Failed to cancel booking.";
+
+      setError(errorMessage);
+    } finally {
+      setActionLoadingBookingId(null);
     }
   }
 
@@ -270,13 +309,29 @@ export default function ClientBookingsPage() {
                       </p>
                     </div>
 
-                    <span
-                      className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
-                        booking.status,
-                      )}`}
-                    >
-                      {booking.status}
-                    </span>
+                    <div className="flex flex-col items-start gap-2 md:items-end">
+                      <span
+                        className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                          booking.status,
+                        )}`}
+                      >
+                        {booking.status}
+                      </span>
+
+                      {(booking.status === "PENDING" ||
+                        booking.status === "CONFIRMED") && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancelBooking(booking.id)}
+                          disabled={actionLoadingBookingId === booking.id}
+                          className="rounded-lg border border-red-300/30 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {actionLoadingBookingId === booking.id
+                            ? "Cancelling..."
+                            : "Cancel booking"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))}

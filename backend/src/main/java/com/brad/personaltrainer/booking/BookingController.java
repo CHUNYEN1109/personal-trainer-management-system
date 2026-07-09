@@ -32,4 +32,13 @@ public class BookingController {
         User client = (User) authentication.getPrincipal();
         return bookingService.getClientBookings(client);
     }
+
+    @PatchMapping("/{bookingId}/cancel")
+    public BookingResponse cancelClientBooking(
+            Authentication authentication,
+            @PathVariable Long bookingId
+    ) {
+        User client = (User) authentication.getPrincipal();
+        return bookingService.cancelClientBooking(client, bookingId);
+    }
 }
