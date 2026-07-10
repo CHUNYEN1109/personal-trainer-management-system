@@ -8,7 +8,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "client_packages")
+@Table(name = "packages")
 @Getter
 @Setter
 public class ClientPackage {
@@ -31,6 +31,6 @@ public class ClientPackage {
     @Column(nullable = false)
     private Integer remainingSessions;
 
-    @Column(nullable = false)
+    @Column(name = "purchased_at", nullable = false)
     private LocalDateTime createdAt;
 }
