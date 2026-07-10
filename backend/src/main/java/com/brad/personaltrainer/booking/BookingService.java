@@ -9,19 +9,24 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
+import com.brad.personaltrainer.clientpackage.ClientPackage;
+import com.brad.personaltrainer.clientpackage.ClientPackageRepository;
 
 @Service
 public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final TrainingSlotRepository trainingSlotRepository;
+    private final ClientPackageRepository clientPackageRepository;
 
     public BookingService(
             BookingRepository bookingRepository,
-            TrainingSlotRepository trainingSlotRepository
+            TrainingSlotRepository trainingSlotRepository,
+            ClientPackageRepository clientPackageRepository
     ) {
         this.bookingRepository = bookingRepository;
         this.trainingSlotRepository = trainingSlotRepository;
+        this.clientPackageRepository = clientPackageRepository;
     }
 
     @Transactional
@@ -149,8 +154,26 @@ public class BookingService {
     public BookingResponse completeBooking(User trainer, Long bookingId) {
         Booking booking = getTrainerConfirmedBooking(trainer, bookingId);
 
-        booking.setStatus(BookingStatus.COMPLETED);
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Booking is already completed"
+            );
+        }
 
+        ClientPackage clientPackage = clientPackageRepository
+                .findFirstByClientAndRemainingSessionsGreaterThanOrderByCreatedAtAsc(
+                        booking.getClient(),
+                        0
+                )
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Client does not have remaining package sessions"
+                ));
+
+        clientPackage.setRemainingSessions(clientPackage.getRemainingSessions() - 1);
+        booking.setStatus(BookingStatus.COMPLETED);
+        clientPackageRepository.save(clientPackage);
         Booking savedBooking = bookingRepository.save(booking);
 
         return toResponse(savedBooking);
