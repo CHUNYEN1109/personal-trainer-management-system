@@ -61,19 +61,33 @@ export default function TrainerDashboardPage() {
           manage client bookings here.
         </p>
 
-        <div className="mb-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
-            href="/trainer/bookings"
-            className="rounded-lg bg-cyan-300 px-5 py-2.5 text-center text-sm font-semibold text-[#0B192C] transition hover:bg-cyan-200"
+            href="/trainer/slots"
+            className="rounded-lg bg-cyan-300 px-5 py-3 text-center text-sm font-semibold text-[#0B192C] transition hover:bg-cyan-200"
           >
-            Manage bookings
+            Manage Slots
           </Link>
 
           <Link
-            href="/trainer/slots"
-            className="rounded-lg border border-cyan-300/40 px-5 py-2.5 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-300/10"
+            href="/trainer/bookings"
+            className="rounded-lg border border-cyan-300/40 px-5 py-3 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-300/10"
           >
-            Manage slots
+            Manage Bookings
+          </Link>
+
+          <Link
+            href="/trainer/packages"
+            className="rounded-lg border border-cyan-300/40 px-5 py-3 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-300/10"
+          >
+            Manage Packages
+          </Link>
+
+          <Link
+            href="/trainer/progress"
+            className="rounded-lg border border-cyan-300/40 px-5 py-3 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-300/10"
+          >
+            Manage Progress
           </Link>
         </div>
 
