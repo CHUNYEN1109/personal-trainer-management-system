@@ -75,6 +75,20 @@ public class ProgressRecordService {
                 .toList();
     }
 
+    public List<ProgressRecordResponse> getClientProgressRecords(User client) {
+        if (client.getRole() != UserRole.CLIENT) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only clients can view progress records"
+            );
+        }
+
+        return progressRecordRepository.findByClientOrderByRecordedAtDesc(client)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private ProgressRecordResponse toResponse(ProgressRecord progressRecord) {
         return new ProgressRecordResponse(
                 progressRecord.getId(),
