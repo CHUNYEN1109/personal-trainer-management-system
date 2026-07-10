@@ -74,6 +74,20 @@ public class ClientPackageService {
                 .toList();
     }
 
+    public List<ClientPackageResponse> getClientPackages(User client) {
+        if (client.getRole() != UserRole.CLIENT) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only clients can view their packages"
+            );
+        }
+
+        return clientPackageRepository.findByClient(client)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private ClientPackageResponse toResponse(ClientPackage clientPackage) {
         return new ClientPackageResponse(
                 clientPackage.getId(),
