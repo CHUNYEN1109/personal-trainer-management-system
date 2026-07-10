@@ -11,7 +11,7 @@ export default function ClientPackagesPage() {
   useEffect(() => {
     async function loadPackages() {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("authToken");
 
         if (!token) {
           setError("You must be logged in to view your packages.");
