@@ -1,0 +1,12 @@
+package com.brad.personaltrainer.clientpackage;
+
+import com.brad.personaltrainer.user.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface ClientPackageRepository extends JpaRepository<ClientPackage, Long> {
+    List<ClientPackage> findByClient(User client);
+
+    List<ClientPackage> findByTrainer(User trainer);
+}
