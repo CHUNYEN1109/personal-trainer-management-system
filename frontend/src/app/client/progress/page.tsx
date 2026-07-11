@@ -37,6 +37,8 @@ export default function ClientProgressPage() {
       bodyFat: record.bodyFat,
     }));
 
+  const latestProgressRecord = chartData.at(-1);
+
   useEffect(() => {
     async function loadProgressRecords() {
       try {
@@ -100,36 +102,62 @@ export default function ClientProgressPage() {
               Track your weight and body fat changes over time.
             </p>
 
-            <div className="mt-4 h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={chartData}
-                  margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="recordedAt" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="weight"
-                    name="Weight"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="bodyFat"
-                    name="Body Fat"
-                    stroke="#dc2626"
-                    strokeWidth={2}
-                    connectNulls
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {chartData.length === 1 && latestProgressRecord ? (
+              <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                <p className="font-medium text-gray-900">
+                  One progress record available.
+                </p>
+                <p className="mt-2">
+                  Add at least one more record to display a progress trend
+                  chart.
+                </p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <p>
+                    <span className="font-medium">Recorded date:</span>{" "}
+                    {latestProgressRecord.recordedAt}
+                  </p>
+                  <p>
+                    <span className="font-medium">Current weight:</span>{" "}
+                    {latestProgressRecord.weight ?? "Not recorded"}
+                  </p>
+                  <p>
+                    <span className="font-medium">Current body fat:</span>{" "}
+                    {latestProgressRecord.bodyFat ?? "Not recorded"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="recordedAt" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="weight"
+                      name="Weight"
+                      stroke="#2563eb"
+                      strokeWidth={2}
+                      connectNulls
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="bodyFat"
+                      name="Body Fat"
+                      stroke="#dc2626"
+                      strokeWidth={2}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </section>
 
           <div className="mt-6 grid gap-4">
