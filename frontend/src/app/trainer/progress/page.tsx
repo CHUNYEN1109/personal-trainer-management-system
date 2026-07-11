@@ -2,13 +2,35 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
   ProgressRecord,
   createTrainerProgressRecord,
   getTrainerProgressRecords,
 } from "@/lib/api/api";
 
+type ProgressClientOption = {
+  clientId: number;
+  clientEmail: string;
+};
+
+type ProgressChartData = {
+  recordedAt: string;
+  weight: number | null;
+  bodyFat: number | null;
+};
+
 export default function TrainerProgressPage() {
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState("");
   const [clientId, setClientId] = useState("");
   const [weight, setWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
@@ -17,6 +39,39 @@ export default function TrainerProgressPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const clients: ProgressClientOption[] = Array.from(
+    new Map(
+      progressRecords.map((record) => [
+        record.clientId,
+        {
+          clientId: record.clientId,
+          clientEmail: record.clientEmail,
+        },
+      ]),
+    ).values(),
+  ).sort((firstClient, secondClient) =>
+    firstClient.clientEmail.localeCompare(secondClient.clientEmail),
+  );
+
+  const filteredProgressRecords = selectedClientId
+    ? progressRecords.filter(
+        (record) => record.clientId === Number(selectedClientId),
+      )
+    : [];
+
+  const chartData: ProgressChartData[] = filteredProgressRecords
+    .slice()
+    .sort(
+      (firstRecord, secondRecord) =>
+        new Date(firstRecord.recordedAt).getTime() -
+        new Date(secondRecord.recordedAt).getTime(),
+    )
+    .map((record) => ({
+      recordedAt: new Date(record.recordedAt).toLocaleDateString(),
+      weight: record.weight,
+      bodyFat: record.bodyFat,
+    }));
 
   function getToken(): string | null {
     if (typeof window === "undefined") {
@@ -140,6 +195,7 @@ export default function TrainerProgressPage() {
       setWeight("");
       setBodyFat("");
       setDietSuggestion("");
+      setSelectedClientId(String(parsedClientId));
       setSuccessMessage("Progress record created successfully.");
 
       await loadProgressRecords();
@@ -261,6 +317,84 @@ export default function TrainerProgressPage() {
         )}
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      </section>
+
+      <section className="mt-8 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 className="text-lg font-medium">Progress Trend</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Select a client to view their weight and body fat changes over time.
+        </p>
+
+        {progressRecords.length === 0 ? (
+          <p className="mt-4 text-gray-600">
+            Create a progress record before viewing a chart.
+          </p>
+        ) : (
+          <>
+            <div className="mt-4">
+              <label
+                htmlFor="selectedClientId"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Client
+              </label>
+              <select
+                id="selectedClientId"
+                value={selectedClientId}
+                onChange={(event) => setSelectedClientId(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">Select a client</option>
+                {clients.map((client) => (
+                  <option key={client.clientId} value={client.clientId}>
+                    {client.clientEmail} (ID: {client.clientId})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {!selectedClientId ? (
+              <p className="mt-4 text-gray-600">
+                Select a client to display the progress chart.
+              </p>
+            ) : chartData.length === 0 ? (
+              <p className="mt-4 text-gray-600">
+                This client does not have any progress records yet.
+              </p>
+            ) : (
+              <div className="mt-4 h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="recordedAt" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="weight"
+                      name="Weight"
+                      stroke="#2563eb"
+                      strokeWidth={2}
+                      connectNulls
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="bodyFat"
+                      name="Body Fat"
+                      stroke="#dc2626"
+                      strokeWidth={2}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       <section className="mt-8">
