@@ -73,6 +73,8 @@ export default function TrainerProgressPage() {
       bodyFat: record.bodyFat,
     }));
 
+  const latestSelectedProgressRecord = chartData.at(-1);
+
   function getToken(): string | null {
     if (typeof window === "undefined") {
       return null;
@@ -361,6 +363,30 @@ export default function TrainerProgressPage() {
               <p className="mt-4 text-gray-600">
                 This client does not have any progress records yet.
               </p>
+            ) : chartData.length === 1 && latestSelectedProgressRecord ? (
+              <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                <p className="font-medium text-gray-900">
+                  One progress record available for this client.
+                </p>
+                <p className="mt-2">
+                  Add at least one more record for this client to display a
+                  progress trend chart.
+                </p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <p>
+                    <span className="font-medium">Recorded date:</span>{" "}
+                    {latestSelectedProgressRecord.recordedAt}
+                  </p>
+                  <p>
+                    <span className="font-medium">Current weight:</span>{" "}
+                    {latestSelectedProgressRecord.weight ?? "Not recorded"}
+                  </p>
+                  <p>
+                    <span className="font-medium">Current body fat:</span>{" "}
+                    {latestSelectedProgressRecord.bodyFat ?? "Not recorded"}
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="mt-4 h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
