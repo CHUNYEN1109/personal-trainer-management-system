@@ -17,6 +17,45 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export type TrainerClient = {
+  id: number;
+  clientId: number;
+  clientEmail: string;
+  clientUsername: string;
+  trainerId: number;
+  trainerEmail: string;
+  status: string;
+  createdAt: string;
+};
+
+export type CreateTrainerClientRequest = {
+  clientId: number;
+};
+
+export async function addTrainerClient(
+  token: string,
+  request: CreateTrainerClientRequest
+): Promise<TrainerClient> {
+  const response = await fetch(`${API_BASE_URL}/api/trainer/clients`, {
+    method: "POST",
+    headers: getAuthHeaders(token),
+    body: JSON.stringify(request),
+  });
+
+  return handleResponse<TrainerClient>(response);
+}
+
+export async function getTrainerClients(
+  token: string
+): Promise<TrainerClient[]> {
+  const response = await fetch(`${API_BASE_URL}/api/trainer/clients`, {
+    method: "GET",
+    headers: getAuthHeaders(token),
+  });
+
+  return handleResponse<TrainerClient[]>(response);
+}
+
 export type ClientPackage = {
   id: number;
   clientId: number;
