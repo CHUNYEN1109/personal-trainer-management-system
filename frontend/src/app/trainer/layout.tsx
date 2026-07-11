@@ -39,6 +39,13 @@ export default function TrainerLayout({
             </Link>
 
             <Link
+              href="/trainer/clients"
+              className="rounded-md border border-white/10 px-3 py-2 text-white transition hover:border-cyan-300 hover:bg-white/10"
+            >
+              Clients
+            </Link>
+
+            <Link
               href="/trainer/packages"
               className="rounded-md border border-white/10 px-3 py-2 text-white transition hover:border-cyan-300 hover:bg-white/10"
             >
