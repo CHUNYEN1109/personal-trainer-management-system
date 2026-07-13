@@ -1,14 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
   ClientPackage,
   createTrainerPackage,
+  getTrainerClients,
   getTrainerPackages,
+  TrainerClient,
 } from "@/lib/api/api";
 
 export default function TrainerPackagesPage() {
   const [packages, setPackages] = useState<ClientPackage[]>([]);
+  const [clients, setClients] = useState<TrainerClient[]>([]);
   const [clientId, setClientId] = useState("");
   const [totalSessions, setTotalSessions] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +51,7 @@ export default function TrainerPackagesPage() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadInitialPackages() {
+    async function loadInitialData() {
       try {
         const token = getToken();
 
@@ -58,15 +62,21 @@ export default function TrainerPackagesPage() {
           return;
         }
 
-        const data = await getTrainerPackages(token);
+        const [packageData, clientData] = await Promise.all([
+          getTrainerPackages(token),
+          getTrainerClients(token),
+        ]);
 
         if (isMounted) {
-          setPackages(data);
+          setPackages(packageData);
+          setClients(clientData);
         }
       } catch (error) {
         if (isMounted) {
           setError(
-            error instanceof Error ? error.message : "Failed to load packages.",
+            error instanceof Error
+              ? error.message
+              : "Failed to load package data.",
           );
         }
       } finally {
@@ -76,7 +86,7 @@ export default function TrainerPackagesPage() {
       }
     }
 
-    void loadInitialPackages();
+    void loadInitialData();
 
     return () => {
       isMounted = false;
@@ -102,7 +112,7 @@ export default function TrainerPackagesPage() {
       const parsedTotalSessions = Number(totalSessions);
 
       if (!parsedClientId || parsedClientId <= 0) {
-        setError("Please enter a valid client ID.");
+        setError("Please select a client.");
         return;
       }
 
@@ -149,51 +159,70 @@ export default function TrainerPackagesPage() {
       <section className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="text-lg font-medium">Create Package</h2>
 
-        <form onSubmit={handleCreatePackage} className="mt-4 grid gap-4">
-          <div>
-            <label
-              htmlFor="clientId"
-              className="block text-sm font-medium text-gray-700"
+        {clients.length === 0 ? (
+          <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+            <p className="font-medium">No clients available.</p>
+            <p className="mt-2">
+              Add clients to your trainer client list before creating packages.
+            </p>
+            <Link
+              href="/trainer/clients"
+              className="mt-3 inline-block rounded-md bg-gray-900 px-4 py-2 text-white"
             >
-              Client ID
-            </label>
-            <input
-              id="clientId"
-              type="number"
-              min="1"
-              value={clientId}
-              onChange={(event) => setClientId(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="Enter client ID"
-            />
+              Go to Client Management
+            </Link>
           </div>
+        ) : (
+          <form onSubmit={handleCreatePackage} className="mt-4 grid gap-4">
+            <div>
+              <label
+                htmlFor="clientId"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Client
+              </label>
+              <select
+                id="clientId"
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">Select a client</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.clientId}>
+                    {client.clientUsername} - {client.clientEmail}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label
-              htmlFor="totalSessions"
-              className="block text-sm font-medium text-gray-700"
+            <div>
+              <label
+                htmlFor="totalSessions"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Total Sessions
+              </label>
+              <input
+                id="totalSessions"
+                type="number"
+                min="1"
+                value={totalSessions}
+                onChange={(event) => setTotalSessions(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="Enter total sessions"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-fit rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
             >
-              Total Sessions
-            </label>
-            <input
-              id="totalSessions"
-              type="number"
-              min="1"
-              value={totalSessions}
-              onChange={(event) => setTotalSessions(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="Enter total sessions"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-fit rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
-          >
-            {isSubmitting ? "Creating..." : "Create Package"}
-          </button>
-        </form>
+              {isSubmitting ? "Creating..." : "Create Package"}
+            </button>
+          </form>
+        )}
 
         {successMessage && (
           <p className="mt-4 text-sm text-green-600">{successMessage}</p>
