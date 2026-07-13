@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
   CartesianGrid,
@@ -13,7 +14,9 @@ import {
 } from "recharts";
 import {
   ProgressRecord,
+  TrainerClient,
   createTrainerProgressRecord,
+  getTrainerClients,
   getTrainerProgressRecords,
 } from "@/lib/api/api";
 
@@ -30,6 +33,7 @@ type ProgressChartData = {
 
 export default function TrainerProgressPage() {
   const [progressRecords, setProgressRecords] = useState<ProgressRecord[]>([]);
+  const [trainerClients, setTrainerClients] = useState<TrainerClient[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [clientId, setClientId] = useState("");
   const [weight, setWeight] = useState("");
@@ -40,7 +44,7 @@ export default function TrainerProgressPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const clients: ProgressClientOption[] = Array.from(
+  const progressClients: ProgressClientOption[] = Array.from(
     new Map(
       progressRecords.map((record) => [
         record.clientId,
@@ -110,7 +114,7 @@ export default function TrainerProgressPage() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadInitialProgressRecords() {
+    async function loadInitialData() {
       try {
         const token = getToken();
 
@@ -123,17 +127,21 @@ export default function TrainerProgressPage() {
           return;
         }
 
-        const data = await getTrainerProgressRecords(token);
+        const [progressData, trainerClientData] = await Promise.all([
+          getTrainerProgressRecords(token),
+          getTrainerClients(token),
+        ]);
 
         if (isMounted) {
-          setProgressRecords(data);
+          setProgressRecords(progressData);
+          setTrainerClients(trainerClientData);
         }
       } catch (error) {
         if (isMounted) {
           setError(
             error instanceof Error
               ? error.message
-              : "Failed to load progress records.",
+              : "Failed to load progress data.",
           );
         }
       } finally {
@@ -143,7 +151,7 @@ export default function TrainerProgressPage() {
       }
     }
 
-    void loadInitialProgressRecords();
+    void loadInitialData();
 
     return () => {
       isMounted = false;
@@ -172,7 +180,7 @@ export default function TrainerProgressPage() {
       const parsedBodyFat = bodyFat ? Number(bodyFat) : undefined;
 
       if (!parsedClientId || parsedClientId <= 0) {
-        setError("Please enter a valid client ID.");
+        setError("Please select a client.");
         return;
       }
 
@@ -231,88 +239,111 @@ export default function TrainerProgressPage() {
       <section className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="text-lg font-medium">Create Progress Record</h2>
 
-        <form onSubmit={handleCreateProgressRecord} className="mt-4 grid gap-4">
-          <div>
-            <label
-              htmlFor="clientId"
-              className="block text-sm font-medium text-gray-700"
+        {trainerClients.length === 0 ? (
+          <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+            <p className="font-medium">No clients available.</p>
+            <p className="mt-2">
+              Add clients to your trainer client list before creating progress
+              records.
+            </p>
+            <Link
+              href="/trainer/clients"
+              className="mt-3 inline-block rounded-md bg-gray-900 px-4 py-2 text-white"
             >
-              Client ID
-            </label>
-            <input
-              id="clientId"
-              type="number"
-              min="1"
-              value={clientId}
-              onChange={(event) => setClientId(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="Enter client ID"
-            />
+              Go to Client Management
+            </Link>
           </div>
-
-          <div>
-            <label
-              htmlFor="weight"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Weight
-            </label>
-            <input
-              id="weight"
-              type="number"
-              min="0"
-              step="0.01"
-              value={weight}
-              onChange={(event) => setWeight(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="Enter weight"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="bodyFat"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Body Fat
-            </label>
-            <input
-              id="bodyFat"
-              type="number"
-              min="0"
-              step="0.01"
-              value={bodyFat}
-              onChange={(event) => setBodyFat(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="Enter body fat"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="dietSuggestion"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Diet Suggestion
-            </label>
-            <textarea
-              id="dietSuggestion"
-              value={dietSuggestion}
-              onChange={(event) => setDietSuggestion(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="Enter diet suggestion"
-              rows={4}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-fit rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+        ) : (
+          <form
+            onSubmit={handleCreateProgressRecord}
+            className="mt-4 grid gap-4"
           >
-            {isSubmitting ? "Creating..." : "Create Progress Record"}
-          </button>
-        </form>
+            <div>
+              <label
+                htmlFor="clientId"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Client
+              </label>
+              <select
+                id="clientId"
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">Select a client</option>
+                {trainerClients.map((client) => (
+                  <option key={client.id} value={client.clientId}>
+                    {client.clientUsername} - {client.clientEmail}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="weight"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Weight
+              </label>
+              <input
+                id="weight"
+                type="number"
+                min="0"
+                step="0.01"
+                value={weight}
+                onChange={(event) => setWeight(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="Enter weight"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="bodyFat"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Body Fat
+              </label>
+              <input
+                id="bodyFat"
+                type="number"
+                min="0"
+                step="0.01"
+                value={bodyFat}
+                onChange={(event) => setBodyFat(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="Enter body fat"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="dietSuggestion"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Diet Suggestion
+              </label>
+              <textarea
+                id="dietSuggestion"
+                value={dietSuggestion}
+                onChange={(event) => setDietSuggestion(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="Enter diet suggestion"
+                rows={4}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-fit rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+            >
+              {isSubmitting ? "Creating..." : "Create Progress Record"}
+            </button>
+          </form>
+        )}
 
         {successMessage && (
           <p className="mt-4 text-sm text-green-600">{successMessage}</p>
@@ -347,7 +378,7 @@ export default function TrainerProgressPage() {
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
               >
                 <option value="">Select a client</option>
-                {clients.map((client) => (
+                {progressClients.map((client) => (
                   <option key={client.clientId} value={client.clientId}>
                     {client.clientEmail} (ID: {client.clientId})
                   </option>
