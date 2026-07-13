@@ -115,6 +115,7 @@ export async function createTrainerPackage(
   return handleResponse<ClientPackage>(response);
 }
 
+
 export async function getTrainerPackages(
   token: string
 ): Promise<ClientPackage[]> {
@@ -122,6 +123,21 @@ export async function getTrainerPackages(
     method: "GET",
     headers: getAuthHeaders(token),
   });
+
+  return handleResponse<ClientPackage[]>(response);
+}
+
+export async function getTrainerClientPackages(
+  token: string,
+  trainerClientId: number
+): Promise<ClientPackage[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/trainer/clients/${trainerClientId}/packages`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(token),
+    }
+  );
 
   return handleResponse<ClientPackage[]>(response);
 }
