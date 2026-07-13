@@ -14,6 +14,7 @@ import java.util.List;
 public class TrainerClientService {
 
     private static final String ACTIVE_STATUS = "ACTIVE";
+    private static final String INACTIVE_STATUS = "INACTIVE";
 
     private final TrainerClientRepository trainerClientRepository;
     private final UserRepository userRepository;
@@ -80,6 +81,31 @@ public class TrainerClientService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public TrainerClientResponse deactivateClient(
+            User trainer,
+            Long trainerClientId
+    ) {
+        if (trainer.getRole() != UserRole.TRAINER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only trainers can deactivate clients"
+            );
+        }
+
+        TrainerClient trainerClient = trainerClientRepository
+                .findByIdAndTrainer(trainerClientId, trainer)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Trainer client relationship not found"
+                ));
+
+        trainerClient.setStatus(INACTIVE_STATUS);
+
+        TrainerClient savedTrainerClient = trainerClientRepository.save(trainerClient);
+
+        return toResponse(savedTrainerClient);
     }
 
     private TrainerClientResponse toResponse(TrainerClient trainerClient) {
