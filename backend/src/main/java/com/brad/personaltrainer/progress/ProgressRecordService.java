@@ -1,5 +1,6 @@
 package com.brad.personaltrainer.progress;
 
+import com.brad.personaltrainer.trainerclient.TrainerClientRepository;
 import com.brad.personaltrainer.user.User;
 import com.brad.personaltrainer.user.UserRepository;
 import com.brad.personaltrainer.user.UserRole;
@@ -15,13 +16,16 @@ public class ProgressRecordService {
 
     private final ProgressRecordRepository progressRecordRepository;
     private final UserRepository userRepository;
+    private final TrainerClientRepository trainerClientRepository;
 
     public ProgressRecordService(
             ProgressRecordRepository progressRecordRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            TrainerClientRepository trainerClientRepository
     ) {
         this.progressRecordRepository = progressRecordRepository;
         this.userRepository = userRepository;
+        this.trainerClientRepository = trainerClientRepository;
     }
 
     public ProgressRecordResponse createProgressRecord(
@@ -45,6 +49,13 @@ public class ProgressRecordService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Progress record can only be created for clients"
+            );
+        }
+
+        if (!trainerClientRepository.existsByTrainerAndClient(trainer, client)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Client is not assigned to this trainer"
             );
         }
 
