@@ -115,7 +115,6 @@ export async function createTrainerPackage(
   return handleResponse<ClientPackage>(response);
 }
 
-
 export async function getTrainerPackages(
   token: string
 ): Promise<ClientPackage[]> {
@@ -151,6 +150,25 @@ export async function getClientPackages(
   });
 
   return handleResponse<ClientPackage[]>(response);
+}
+
+export type Trophy = {
+  id: number;
+  clientId: number;
+  clientEmail: string;
+  type: string;
+  title: string;
+  description: string;
+  awardedAt: string;
+};
+
+export async function getClientTrophies(token: string): Promise<Trophy[]> {
+  const response = await fetch(`${API_BASE_URL}/api/client/trophies`, {
+    method: "GET",
+    headers: getAuthHeaders(token),
+  });
+
+  return handleResponse<Trophy[]>(response);
 }
 
 export type ProgressRecord = {
