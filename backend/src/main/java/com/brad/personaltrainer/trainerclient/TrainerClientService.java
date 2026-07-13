@@ -108,6 +108,31 @@ public class TrainerClientService {
         return toResponse(savedTrainerClient);
     }
 
+    public TrainerClientResponse reactivateClient(
+            User trainer,
+            Long trainerClientId
+    ) {
+        if (trainer.getRole() != UserRole.TRAINER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only trainers can reactivate clients"
+            );
+        }
+
+        TrainerClient trainerClient = trainerClientRepository
+                .findByIdAndTrainer(trainerClientId, trainer)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Trainer client relationship not found"
+                ));
+
+        trainerClient.setStatus(ACTIVE_STATUS);
+
+        TrainerClient savedTrainerClient = trainerClientRepository.save(trainerClient);
+
+        return toResponse(savedTrainerClient);
+    }
+
     private TrainerClientResponse toResponse(TrainerClient trainerClient) {
         return new TrainerClientResponse(
                 trainerClient.getId(),

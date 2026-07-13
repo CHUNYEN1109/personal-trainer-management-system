@@ -45,4 +45,14 @@ public class TrainerClientController {
 
         return trainerClientService.deactivateClient(trainer, trainerClientId);
     }
+
+    @PatchMapping("/{trainerClientId}/reactivate")
+    public TrainerClientResponse reactivateClient(
+            Authentication authentication,
+            @PathVariable Long trainerClientId
+    ) {
+        User trainer = (User) authentication.getPrincipal();
+
+        return trainerClientService.reactivateClient(trainer, trainerClientId);
+    }
 }
