@@ -1,5 +1,6 @@
 package com.brad.personaltrainer.clientpackage;
 
+import com.brad.personaltrainer.trainerclient.TrainerClientRepository;
 import com.brad.personaltrainer.user.User;
 import com.brad.personaltrainer.user.UserRepository;
 import com.brad.personaltrainer.user.UserRole;
@@ -15,13 +16,16 @@ public class ClientPackageService {
 
     private final ClientPackageRepository clientPackageRepository;
     private final UserRepository userRepository;
+    private final TrainerClientRepository trainerClientRepository;
 
     public ClientPackageService(
             ClientPackageRepository clientPackageRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            TrainerClientRepository trainerClientRepository
     ) {
         this.clientPackageRepository = clientPackageRepository;
         this.userRepository = userRepository;
+        this.trainerClientRepository = trainerClientRepository;
     }
 
     public ClientPackageResponse createPackage(
@@ -45,6 +49,13 @@ public class ClientPackageService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Package can only be created for clients"
+            );
+        }
+
+        if (!trainerClientRepository.existsByTrainerAndClient(trainer, client)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Client is not assigned to this trainer"
             );
         }
 
