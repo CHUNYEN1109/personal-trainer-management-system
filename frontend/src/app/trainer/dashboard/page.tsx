@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { ClientPackage, getTrainerPackages } from "@/lib/api/api";
+import {
+  ClientPackage,
+  getTrainerClients,
+  getTrainerPackages,
+  TrainerClient,
+} from "@/lib/api/api";
 
 export default function TrainerDashboardPage() {
   const router = useRouter();
@@ -12,6 +17,9 @@ export default function TrainerDashboardPage() {
   const [packages, setPackages] = useState<ClientPackage[]>([]);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [packageSummaryError, setPackageSummaryError] = useState("");
+  const [clients, setClients] = useState<TrainerClient[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [clientSummaryError, setClientSummaryError] = useState("");
 
   function getToken(): string | null {
     if (typeof window === "undefined") {
@@ -80,6 +88,50 @@ export default function TrainerDashboardPage() {
     };
   }, [currentUser, isAuthenticated, isLoading]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadClientSummary() {
+      if (isLoading || !isAuthenticated || currentUser?.role !== "TRAINER") {
+        if (!isLoading && isMounted) {
+          setIsLoadingClients(false);
+        }
+        return;
+      }
+
+      try {
+        const token = getToken();
+
+        if (!token) {
+          if (isMounted) {
+            setClientSummaryError("Unable to load client summary.");
+          }
+          return;
+        }
+
+        const data = await getTrainerClients(token);
+
+        if (isMounted) {
+          setClients(data);
+        }
+      } catch {
+        if (isMounted) {
+          setClientSummaryError("Unable to load client summary.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingClients(false);
+        }
+      }
+    }
+
+    void loadClientSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser, isAuthenticated, isLoading]);
+
   function handleLogout() {
     logout();
     router.push("/");
@@ -95,6 +147,13 @@ export default function TrainerDashboardPage() {
     0,
   );
   const totalUsedSessions = totalSessionsSold - totalRemainingSessions;
+  const totalClients = clients.length;
+  const activeClients = clients.filter(
+    (client) => client.status === "ACTIVE",
+  ).length;
+  const inactiveClients = clients.filter(
+    (client) => client.status !== "ACTIVE",
+  ).length;
 
   if (isLoading) {
     return (
@@ -215,6 +274,63 @@ export default function TrainerDashboardPage() {
                   <p className="text-xs text-[#E0E0E0]">Used</p>
                   <p className="mt-1 text-lg font-semibold text-white">
                     {totalUsedSessions}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </Link>
+
+        <Link
+          href="/trainer/clients"
+          className="mb-8 block rounded-lg border border-cyan-300/30 bg-white/5 p-5 transition hover:border-cyan-300 hover:bg-white/10"
+        >
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">
+                  Client Summary
+                </p>
+
+                <h2 className="mt-2 text-2xl font-semibold text-white">
+                  {isLoadingClients
+                    ? "Loading clients..."
+                    : clientSummaryError
+                      ? "Client summary unavailable"
+                      : `${totalClients} assigned clients`}
+                </h2>
+
+                <p className="mt-2 text-sm text-[#E0E0E0]">
+                  Review assigned clients, active relationships, and inactive
+                  clients.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-[#0B192C]">
+                View clients
+              </span>
+            </div>
+
+            {!isLoadingClients && !clientSummaryError && (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Total clients</p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {totalClients}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Active</p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {activeClients}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Inactive</p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {inactiveClients}
                   </p>
                 </div>
               </div>
