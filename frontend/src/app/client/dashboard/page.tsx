@@ -61,7 +61,7 @@ export default function ClientDashboardPage() {
           to view available trainer slots and manage their bookings here.
         </p>
 
-        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/client/bookings"
             className="rounded-lg bg-cyan-300 px-5 py-3 text-center text-sm font-semibold text-[#0B192C] transition hover:bg-cyan-200"
@@ -81,6 +81,13 @@ export default function ClientDashboardPage() {
             className="rounded-lg border border-cyan-300/40 px-5 py-3 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-300/10"
           >
             My Progress
+          </Link>
+
+          <Link
+            href="/client/trophies"
+            className="rounded-lg border border-cyan-300/40 px-5 py-3 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-300/10"
+          >
+            My Trophies
           </Link>
         </div>
 

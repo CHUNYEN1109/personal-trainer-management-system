@@ -44,6 +44,13 @@ export default function ClientLayout({
             >
               Progress
             </Link>
+
+            <Link
+              href="/client/trophies"
+              className="rounded-md border border-white/10 px-3 py-2 text-white transition hover:border-cyan-300 hover:bg-white/10"
+            >
+              Trophies
+            </Link>
           </div>
         </nav>
       </header>
