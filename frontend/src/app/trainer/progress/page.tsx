@@ -44,6 +44,10 @@ export default function TrainerProgressPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  const activeTrainerClients = trainerClients.filter(
+    (client) => client.status === "ACTIVE",
+  );
+
   const progressClients: ProgressClientOption[] = Array.from(
     new Map(
       progressRecords.map((record) => [
@@ -239,12 +243,12 @@ export default function TrainerProgressPage() {
       <section className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="text-lg font-medium">Create Progress Record</h2>
 
-        {trainerClients.length === 0 ? (
+        {activeTrainerClients.length === 0 ? (
           <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-            <p className="font-medium">No clients available.</p>
+            <p className="font-medium">No active clients available.</p>
             <p className="mt-2">
-              Add clients to your trainer client list before creating progress
-              records.
+              Add active clients to your trainer client list before creating
+              progress records.
             </p>
             <Link
               href="/trainer/clients"
@@ -272,7 +276,7 @@ export default function TrainerProgressPage() {
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
               >
                 <option value="">Select a client</option>
-                {trainerClients.map((client) => (
+                {activeTrainerClients.map((client) => (
                   <option key={client.id} value={client.clientId}>
                     {client.clientUsername} - {client.clientEmail}
                   </option>
@@ -419,12 +423,9 @@ export default function TrainerProgressPage() {
                 </div>
               </div>
             ) : (
-              <div className="mt-4 h-80 w-full">
+              <div className="mt-6 h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={chartData}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                  >
+                  <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="recordedAt" />
                     <YAxis />
@@ -434,17 +435,13 @@ export default function TrainerProgressPage() {
                       type="monotone"
                       dataKey="weight"
                       name="Weight"
-                      stroke="#2563eb"
-                      strokeWidth={2}
-                      connectNulls
+                      stroke="#111827"
                     />
                     <Line
                       type="monotone"
                       dataKey="bodyFat"
                       name="Body Fat"
-                      stroke="#dc2626"
-                      strokeWidth={2}
-                      connectNulls
+                      stroke="#6B7280"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -472,8 +469,8 @@ export default function TrainerProgressPage() {
                   <h3 className="text-lg font-medium">
                     Progress Record #{record.id}
                   </h3>
-                  <span className="text-sm text-gray-500">
-                    {new Date(record.recordedAt).toLocaleString()}
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-sm">
+                    {new Date(record.recordedAt).toLocaleDateString()}
                   </span>
                 </div>
 
@@ -496,7 +493,11 @@ export default function TrainerProgressPage() {
                   </p>
                   <p>
                     <span className="font-medium">Diet suggestion:</span>{" "}
-                    {record.dietSuggestion || "No suggestion provided."}
+                    {record.dietSuggestion || "Not provided"}
+                  </p>
+                  <p>
+                    <span className="font-medium">Recorded at:</span>{" "}
+                    {new Date(record.recordedAt).toLocaleString()}
                   </p>
                 </div>
               </div>
