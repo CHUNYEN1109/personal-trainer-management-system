@@ -3,7 +3,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import {
   addTrainerClient,
+  ClientPackage,
   deactivateTrainerClient,
+  getTrainerClientPackages,
   getTrainerClients,
   reactivateTrainerClient,
   TrainerClient,
@@ -20,6 +22,16 @@ export default function TrainerClientsPage() {
   const [reactivatingClientId, setReactivatingClientId] = useState<
     number | null
   >(null);
+  const [expandedPackageClientId, setExpandedPackageClientId] = useState<
+    number | null
+  >(null);
+  const [loadingPackageClientId, setLoadingPackageClientId] = useState<
+    number | null
+  >(null);
+  const [packagesByClientId, setPackagesByClientId] = useState<
+    Record<number, ClientPackage[]>
+  >({});
+  const [packageError, setPackageError] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -183,6 +195,47 @@ export default function TrainerClientsPage() {
     }
   }
 
+  async function handleTogglePackages(trainerClientId: number) {
+    setPackageError("");
+
+    if (expandedPackageClientId === trainerClientId) {
+      setExpandedPackageClientId(null);
+      return;
+    }
+
+    setExpandedPackageClientId(trainerClientId);
+
+    if (packagesByClientId[trainerClientId]) {
+      return;
+    }
+
+    setLoadingPackageClientId(trainerClientId);
+
+    try {
+      const token = getToken();
+
+      if (!token) {
+        setPackageError("You must be logged in as a trainer to view packages.");
+        return;
+      }
+
+      const data = await getTrainerClientPackages(token, trainerClientId);
+
+      setPackagesByClientId((currentPackages) => ({
+        ...currentPackages,
+        [trainerClientId]: data,
+      }));
+    } catch (error) {
+      setPackageError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load client packages.",
+      );
+    } finally {
+      setLoadingPackageClientId(null);
+    }
+  }
+
   if (isLoading) {
     return (
       <main className="p-6">
@@ -250,6 +303,20 @@ export default function TrainerClientsPage() {
               const isActive = client.status === "ACTIVE";
               const isDeactivating = deactivatingClientId === client.id;
               const isReactivating = reactivatingClientId === client.id;
+              const isPackageHistoryOpen =
+                expandedPackageClientId === client.id;
+              const isLoadingPackages = loadingPackageClientId === client.id;
+              const clientPackages = packagesByClientId[client.id] || [];
+              const totalSessions = clientPackages.reduce(
+                (total, clientPackage) => total + clientPackage.totalSessions,
+                0,
+              );
+              const remainingSessions = clientPackages.reduce(
+                (total, clientPackage) =>
+                  total + clientPackage.remainingSessions,
+                0,
+              );
+              const usedSessions = totalSessions - remainingSessions;
 
               return (
                 <div
@@ -284,7 +351,7 @@ export default function TrainerClientsPage() {
                     </p>
                   </div>
 
-                  <div className="mt-4">
+                  <div className="mt-4 flex flex-wrap gap-3">
                     {isActive ? (
                       <button
                         type="button"
@@ -304,7 +371,119 @@ export default function TrainerClientsPage() {
                         {isReactivating ? "Reactivating..." : "Reactivate"}
                       </button>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => void handleTogglePackages(client.id)}
+                      disabled={isLoadingPackages}
+                      className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-60"
+                    >
+                      {isLoadingPackages
+                        ? "Loading packages..."
+                        : isPackageHistoryOpen
+                          ? "Hide packages"
+                          : "View packages"}
+                    </button>
                   </div>
+
+                  {isPackageHistoryOpen && (
+                    <section className="mt-5 rounded-lg border border-gray-100 bg-gray-50 p-4">
+                      <h4 className="font-medium">Package History</h4>
+
+                      {packageError && (
+                        <p className="mt-3 text-sm text-red-600">
+                          {packageError}
+                        </p>
+                      )}
+
+                      {isLoadingPackages ? (
+                        <p className="mt-3 text-sm text-gray-600">
+                          Loading package history...
+                        </p>
+                      ) : clientPackages.length === 0 ? (
+                        <p className="mt-3 text-sm text-gray-600">
+                          This client does not have any packages from you yet.
+                        </p>
+                      ) : (
+                        <>
+                          <div className="mt-4 grid gap-3 md:grid-cols-3">
+                            <div className="rounded-md bg-white p-3 shadow-sm">
+                              <p className="text-xs text-gray-500">
+                                Total sessions
+                              </p>
+                              <p className="mt-1 text-xl font-semibold">
+                                {totalSessions}
+                              </p>
+                            </div>
+
+                            <div className="rounded-md bg-white p-3 shadow-sm">
+                              <p className="text-xs text-gray-500">
+                                Remaining sessions
+                              </p>
+                              <p className="mt-1 text-xl font-semibold">
+                                {remainingSessions}
+                              </p>
+                            </div>
+
+                            <div className="rounded-md bg-white p-3 shadow-sm">
+                              <p className="text-xs text-gray-500">
+                                Used sessions
+                              </p>
+                              <p className="mt-1 text-xl font-semibold">
+                                {usedSessions}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid gap-3">
+                            {clientPackages.map((clientPackage) => (
+                              <div
+                                key={clientPackage.id}
+                                className="rounded-md bg-white p-3 text-sm shadow-sm"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="font-medium">
+                                    Package #{clientPackage.id}
+                                  </p>
+                                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs">
+                                    {clientPackage.remainingSessions} remaining
+                                  </span>
+                                </div>
+
+                                <div className="mt-3 grid gap-2 text-gray-700 md:grid-cols-2">
+                                  <p>
+                                    <span className="font-medium">
+                                      Total sessions:
+                                    </span>{" "}
+                                    {clientPackage.totalSessions}
+                                  </p>
+                                  <p>
+                                    <span className="font-medium">
+                                      Remaining:
+                                    </span>{" "}
+                                    {clientPackage.remainingSessions}
+                                  </p>
+                                  <p>
+                                    <span className="font-medium">Used:</span>{" "}
+                                    {clientPackage.totalSessions -
+                                      clientPackage.remainingSessions}
+                                  </p>
+                                  <p>
+                                    <span className="font-medium">
+                                      Purchased at:
+                                    </span>{" "}
+                                    {new Date(
+                                      clientPackage.createdAt,
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </section>
+                  )}
                 </div>
               );
             })}
