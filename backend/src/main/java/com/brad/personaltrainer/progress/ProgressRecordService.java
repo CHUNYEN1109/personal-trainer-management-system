@@ -7,6 +7,10 @@ import com.brad.personaltrainer.user.UserRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.brad.personaltrainer.trophy.Trophy;
+import com.brad.personaltrainer.trophy.TrophyRepository;
+import com.brad.personaltrainer.trophy.TrophyType;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,17 +23,21 @@ public class ProgressRecordService {
     private final ProgressRecordRepository progressRecordRepository;
     private final UserRepository userRepository;
     private final TrainerClientRepository trainerClientRepository;
+    private final TrophyRepository trophyRepository;
 
     public ProgressRecordService(
             ProgressRecordRepository progressRecordRepository,
             UserRepository userRepository,
-            TrainerClientRepository trainerClientRepository
+            TrainerClientRepository trainerClientRepository,
+            TrophyRepository trophyRepository
     ) {
         this.progressRecordRepository = progressRecordRepository;
         this.userRepository = userRepository;
         this.trainerClientRepository = trainerClientRepository;
+        this.trophyRepository = trophyRepository;
     }
 
+    @Transactional
     public ProgressRecordResponse createProgressRecord(
             User trainer,
             CreateProgressRecordRequest request
@@ -75,6 +83,8 @@ public class ProgressRecordService {
 
         ProgressRecord savedRecord = progressRecordRepository.save(progressRecord);
 
+        awardFirstProgressRecordedTrophy(client);
+
         return toResponse(savedRecord);
     }
 
@@ -104,6 +114,24 @@ public class ProgressRecordService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    private void awardFirstProgressRecordedTrophy(User client) {
+        if (trophyRepository.existsByClientAndType(
+                client,
+                TrophyType.FIRST_PROGRESS_RECORDED
+        )) {
+            return;
+        }
+
+        Trophy trophy = new Trophy();
+        trophy.setClient(client);
+        trophy.setType(TrophyType.FIRST_PROGRESS_RECORDED);
+        trophy.setTitle("First Progress Recorded");
+        trophy.setDescription("Received your first progress record from your trainer.");
+        trophy.setAwardedAt(LocalDateTime.now());
+
+        trophyRepository.save(trophy);
     }
 
     private ProgressRecordResponse toResponse(ProgressRecord progressRecord) {
