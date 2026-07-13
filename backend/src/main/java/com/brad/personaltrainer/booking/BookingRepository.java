@@ -12,4 +12,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByClientOrderBySlotStartTimeAsc(User client);
 
     List<Booking> findBySlotTrainerOrderBySlotStartTimeAsc(User trainer);
+
+    long countByClientAndStatus(User client, BookingStatus status);
 }

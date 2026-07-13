@@ -1,16 +1,19 @@
 package com.brad.personaltrainer.booking;
 
+import com.brad.personaltrainer.clientpackage.ClientPackage;
+import com.brad.personaltrainer.clientpackage.ClientPackageRepository;
+import com.brad.personaltrainer.trophy.Trophy;
+import com.brad.personaltrainer.trophy.TrophyRepository;
+import com.brad.personaltrainer.trophy.TrophyType;
 import com.brad.personaltrainer.user.User;
 import com.brad.personaltrainer.user.UserRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.transaction.annotation.Transactional;
-import com.brad.personaltrainer.clientpackage.ClientPackage;
-import com.brad.personaltrainer.clientpackage.ClientPackageRepository;
 
 @Service
 public class BookingService {
@@ -18,15 +21,18 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final TrainingSlotRepository trainingSlotRepository;
     private final ClientPackageRepository clientPackageRepository;
+    private final TrophyRepository trophyRepository;
 
     public BookingService(
             BookingRepository bookingRepository,
             TrainingSlotRepository trainingSlotRepository,
-            ClientPackageRepository clientPackageRepository
+            ClientPackageRepository clientPackageRepository,
+            TrophyRepository trophyRepository
     ) {
         this.bookingRepository = bookingRepository;
         this.trainingSlotRepository = trainingSlotRepository;
         this.clientPackageRepository = clientPackageRepository;
+        this.trophyRepository = trophyRepository;
     }
 
     @Transactional
@@ -173,10 +179,67 @@ public class BookingService {
 
         clientPackage.setRemainingSessions(clientPackage.getRemainingSessions() - 1);
         booking.setStatus(BookingStatus.COMPLETED);
+
         clientPackageRepository.save(clientPackage);
         Booking savedBooking = bookingRepository.save(booking);
 
+        awardCompletedSessionTrophies(savedBooking.getClient());
+
         return toResponse(savedBooking);
+    }
+
+    private void awardCompletedSessionTrophies(User client) {
+        long completedBookings = bookingRepository.countByClientAndStatus(
+                client,
+                BookingStatus.COMPLETED
+        );
+
+        if (completedBookings >= 1) {
+            awardTrophyIfNotExists(
+                    client,
+                    TrophyType.FIRST_SESSION_COMPLETED,
+                    "First Session Completed",
+                    "Completed your first training session."
+            );
+        }
+
+        if (completedBookings >= 5) {
+            awardTrophyIfNotExists(
+                    client,
+                    TrophyType.FIVE_SESSIONS_COMPLETED,
+                    "Five Sessions Completed",
+                    "Completed five training sessions."
+            );
+        }
+
+        if (completedBookings >= 10) {
+            awardTrophyIfNotExists(
+                    client,
+                    TrophyType.TEN_SESSIONS_COMPLETED,
+                    "Ten Sessions Completed",
+                    "Completed ten training sessions."
+            );
+        }
+    }
+
+    private void awardTrophyIfNotExists(
+            User client,
+            TrophyType type,
+            String title,
+            String description
+    ) {
+        if (trophyRepository.existsByClientAndType(client, type)) {
+            return;
+        }
+
+        Trophy trophy = new Trophy();
+        trophy.setClient(client);
+        trophy.setType(type);
+        trophy.setTitle(title);
+        trophy.setDescription(description);
+        trophy.setAwardedAt(LocalDateTime.now());
+
+        trophyRepository.save(trophy);
     }
 
     private Booking getTrainerPendingBooking(User trainer, Long bookingId) {
