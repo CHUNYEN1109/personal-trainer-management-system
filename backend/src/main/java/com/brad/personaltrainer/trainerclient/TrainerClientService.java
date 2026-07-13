@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TrainerClientService {
@@ -51,11 +52,24 @@ public class TrainerClientService {
             );
         }
 
-        if (trainerClientRepository.existsByTrainerAndClient(trainer, client)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Client is already assigned to this trainer"
-            );
+        Optional<TrainerClient> existingTrainerClient =
+                trainerClientRepository.findByTrainerAndClient(trainer, client);
+
+        if (existingTrainerClient.isPresent()) {
+            TrainerClient trainerClient = existingTrainerClient.get();
+
+            if (ACTIVE_STATUS.equals(trainerClient.getStatus())) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Client is already assigned to this trainer"
+                );
+            }
+
+            trainerClient.setStatus(ACTIVE_STATUS);
+
+            TrainerClient savedTrainerClient = trainerClientRepository.save(trainerClient);
+
+            return toResponse(savedTrainerClient);
         }
 
         TrainerClient trainerClient = new TrainerClient();

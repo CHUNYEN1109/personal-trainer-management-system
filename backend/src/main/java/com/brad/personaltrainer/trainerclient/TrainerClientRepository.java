@@ -16,8 +16,9 @@ public interface TrainerClientRepository extends JpaRepository<TrainerClient, Lo
             String status
     );
 
+    Optional<TrainerClient> findByTrainerAndClient(User trainer, User client);
+
     List<TrainerClient> findByTrainerOrderByCreatedAtDesc(User trainer);
 
     Optional<TrainerClient> findByIdAndTrainer(Long id, User trainer);
-
 }
