@@ -5,6 +5,7 @@ import {
   addTrainerClient,
   deactivateTrainerClient,
   getTrainerClients,
+  reactivateTrainerClient,
   TrainerClient,
 } from "@/lib/api/api";
 
@@ -14,6 +15,9 @@ export default function TrainerClientsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deactivatingClientId, setDeactivatingClientId] = useState<
+    number | null
+  >(null);
+  const [reactivatingClientId, setReactivatingClientId] = useState<
     number | null
   >(null);
   const [error, setError] = useState("");
@@ -152,6 +156,33 @@ export default function TrainerClientsPage() {
     }
   }
 
+  async function handleReactivateClient(trainerClientId: number) {
+    setError("");
+    setSuccessMessage("");
+    setReactivatingClientId(trainerClientId);
+
+    try {
+      const token = getToken();
+
+      if (!token) {
+        setError("You must be logged in as a trainer to reactivate clients.");
+        return;
+      }
+
+      await reactivateTrainerClient(token, trainerClientId);
+
+      setSuccessMessage("Client reactivated successfully.");
+
+      await loadClients();
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to reactivate client.",
+      );
+    } finally {
+      setReactivatingClientId(null);
+    }
+  }
+
   if (isLoading) {
     return (
       <main className="p-6">
@@ -218,6 +249,7 @@ export default function TrainerClientsPage() {
             {clients.map((client) => {
               const isActive = client.status === "ACTIVE";
               const isDeactivating = deactivatingClientId === client.id;
+              const isReactivating = reactivatingClientId === client.id;
 
               return (
                 <div
@@ -263,9 +295,14 @@ export default function TrainerClientsPage() {
                         {isDeactivating ? "Deactivating..." : "Deactivate"}
                       </button>
                     ) : (
-                      <p className="text-sm text-gray-500">
-                        This client relationship is inactive.
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleReactivateClient(client.id)}
+                        disabled={isReactivating}
+                        className="rounded-md border border-green-300 px-4 py-2 text-sm font-medium text-green-700 disabled:opacity-60"
+                      >
+                        {isReactivating ? "Reactivating..." : "Reactivate"}
+                      </button>
                     )}
                   </div>
                 </div>

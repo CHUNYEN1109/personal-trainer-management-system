@@ -71,6 +71,21 @@ export async function deactivateTrainerClient(
   return handleResponse<TrainerClient>(response);
 }
 
+export async function reactivateTrainerClient(
+  token: string,
+  trainerClientId: number
+): Promise<TrainerClient> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/trainer/clients/${trainerClientId}/reactivate`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders(token),
+    }
+  );
+
+  return handleResponse<TrainerClient>(response);
+}
+
 export type ClientPackage = {
   id: number;
   clientId: number;
