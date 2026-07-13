@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { getClientTrophies } from "@/lib/api/api";
 
 export default function ClientDashboardPage() {
   const router = useRouter();
   const { currentUser, isAuthenticated, isLoading, logout } = useAuth();
+  const [trophyCount, setTrophyCount] = useState(0);
+  const [isLoadingTrophies, setIsLoadingTrophies] = useState(true);
+  const [trophySummaryError, setTrophySummaryError] = useState("");
+
+  function getToken(): string | null {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return window.localStorage.getItem("authToken");
+  }
 
   useEffect(() => {
     if (isLoading) {
@@ -23,6 +35,50 @@ export default function ClientDashboardPage() {
       router.push("/unauthorized");
     }
   }, [currentUser, isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTrophySummary() {
+      if (isLoading || !isAuthenticated || currentUser?.role !== "CLIENT") {
+        if (!isLoading && isMounted) {
+          setIsLoadingTrophies(false);
+        }
+        return;
+      }
+
+      try {
+        const token = getToken();
+
+        if (!token) {
+          if (isMounted) {
+            setTrophySummaryError("Unable to load trophy summary.");
+          }
+          return;
+        }
+
+        const trophies = await getClientTrophies(token);
+
+        if (isMounted) {
+          setTrophyCount(trophies.length);
+        }
+      } catch {
+        if (isMounted) {
+          setTrophySummaryError("Unable to load trophy summary.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingTrophies(false);
+        }
+      }
+    }
+
+    void loadTrophySummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser, isAuthenticated, isLoading]);
 
   function handleLogout() {
     logout();
@@ -57,8 +113,8 @@ export default function ClientDashboardPage() {
         </h1>
 
         <p className="mb-8 text-sm leading-6 text-[#E0E0E0]">
-          This is the client dashboard. In the next phase, clients will be able
-          to view available trainer slots and manage their bookings here.
+          This is the client dashboard. You can manage your bookings, view your
+          packages, track your progress, and review your earned trophies.
         </p>
 
         <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -90,6 +146,35 @@ export default function ClientDashboardPage() {
             My Trophies
           </Link>
         </div>
+
+        <Link
+          href="/client/trophies"
+          className="mb-8 block rounded-lg border border-cyan-300/30 bg-cyan-300/10 p-5 transition hover:border-cyan-300 hover:bg-cyan-300/15"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">
+                Trophy Summary
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                {isLoadingTrophies
+                  ? "Loading trophies..."
+                  : trophySummaryError
+                    ? "Trophy summary unavailable"
+                    : `${trophyCount} trophies earned`}
+              </h2>
+
+              <p className="mt-2 text-sm text-[#E0E0E0]">
+                View your earned achievements and training milestones.
+              </p>
+            </div>
+
+            <span className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-[#0B192C]">
+              View trophies
+            </span>
+          </div>
+        </Link>
 
         <div className="mb-8 rounded-lg border border-white/10 bg-white/5 p-5">
           <p className="mb-2 text-sm">
