@@ -14,6 +14,8 @@ import java.util.List;
 @Service
 public class ClientPackageService {
 
+    private static final String ACTIVE_STATUS = "ACTIVE";
+
     private final ClientPackageRepository clientPackageRepository;
     private final UserRepository userRepository;
     private final TrainerClientRepository trainerClientRepository;
@@ -52,10 +54,14 @@ public class ClientPackageService {
             );
         }
 
-        if (!trainerClientRepository.existsByTrainerAndClient(trainer, client)) {
+        if (!trainerClientRepository.existsByTrainerAndClientAndStatus(
+                trainer,
+                client,
+                ACTIVE_STATUS
+        )) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Client is not assigned to this trainer"
+                    "Client is not an active client of this trainer"
             );
         }
 
