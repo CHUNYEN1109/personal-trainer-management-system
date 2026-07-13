@@ -20,6 +20,8 @@ export default function TrainerPackagesPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  const activeClients = clients.filter((client) => client.status === "ACTIVE");
+
   function getToken(): string | null {
     if (typeof window === "undefined") {
       return null;
@@ -159,11 +161,12 @@ export default function TrainerPackagesPage() {
       <section className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="text-lg font-medium">Create Package</h2>
 
-        {clients.length === 0 ? (
+        {activeClients.length === 0 ? (
           <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-            <p className="font-medium">No clients available.</p>
+            <p className="font-medium">No active clients available.</p>
             <p className="mt-2">
-              Add clients to your trainer client list before creating packages.
+              Add active clients to your trainer client list before creating
+              packages.
             </p>
             <Link
               href="/trainer/clients"
@@ -188,7 +191,7 @@ export default function TrainerPackagesPage() {
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
               >
                 <option value="">Select a client</option>
-                {clients.map((client) => (
+                {activeClients.map((client) => (
                   <option key={client.id} value={client.clientId}>
                     {client.clientUsername} - {client.clientEmail}
                   </option>
