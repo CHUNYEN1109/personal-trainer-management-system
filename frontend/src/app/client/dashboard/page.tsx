@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getClientTrophies } from "@/lib/api/api";
+import {
+  getClientProgressRecords,
+  getClientTrophies,
+  ProgressRecord,
+} from "@/lib/api/api";
 
 export default function ClientDashboardPage() {
   const router = useRouter();
@@ -12,6 +16,11 @@ export default function ClientDashboardPage() {
   const [trophyCount, setTrophyCount] = useState(0);
   const [isLoadingTrophies, setIsLoadingTrophies] = useState(true);
   const [trophySummaryError, setTrophySummaryError] = useState("");
+  const [latestProgressRecord, setLatestProgressRecord] =
+    useState<ProgressRecord | null>(null);
+  const [isLoadingProgressSummary, setIsLoadingProgressSummary] =
+    useState(true);
+  const [progressSummaryError, setProgressSummaryError] = useState("");
 
   function getToken(): string | null {
     if (typeof window === "undefined") {
@@ -74,6 +83,50 @@ export default function ClientDashboardPage() {
     }
 
     void loadTrophySummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser, isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProgressSummary() {
+      if (isLoading || !isAuthenticated || currentUser?.role !== "CLIENT") {
+        if (!isLoading && isMounted) {
+          setIsLoadingProgressSummary(false);
+        }
+        return;
+      }
+
+      try {
+        const token = getToken();
+
+        if (!token) {
+          if (isMounted) {
+            setProgressSummaryError("Unable to load progress summary.");
+          }
+          return;
+        }
+
+        const progressRecords = await getClientProgressRecords(token);
+
+        if (isMounted) {
+          setLatestProgressRecord(progressRecords[0] ?? null);
+        }
+      } catch {
+        if (isMounted) {
+          setProgressSummaryError("Unable to load progress summary.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingProgressSummary(false);
+        }
+      }
+    }
+
+    void loadProgressSummary();
 
     return () => {
       isMounted = false;
@@ -173,6 +226,63 @@ export default function ClientDashboardPage() {
             <span className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-[#0B192C]">
               View trophies
             </span>
+          </div>
+        </Link>
+
+        <Link
+          href="/client/progress"
+          className="mb-8 block rounded-lg border border-cyan-300/30 bg-white/5 p-5 transition hover:border-cyan-300 hover:bg-white/10"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">
+                Progress Summary
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                {isLoadingProgressSummary
+                  ? "Loading progress..."
+                  : progressSummaryError
+                    ? "Progress summary unavailable"
+                    : latestProgressRecord
+                      ? "Latest progress record"
+                      : "No progress records yet"}
+              </h2>
+
+              <p className="mt-2 text-sm text-[#E0E0E0]">
+                {latestProgressRecord
+                  ? `Recorded on ${new Date(
+                      latestProgressRecord.recordedAt,
+                    ).toLocaleString()}`
+                  : "View your progress history and training updates."}
+              </p>
+            </div>
+
+            {latestProgressRecord && !progressSummaryError ? (
+              <div className="grid gap-3 text-sm sm:grid-cols-2">
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Weight</p>
+                  <p className="mt-1 font-semibold text-white">
+                    {latestProgressRecord.weight !== null
+                      ? `${latestProgressRecord.weight} kg`
+                      : "Not recorded"}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Body fat</p>
+                  <p className="mt-1 font-semibold text-white">
+                    {latestProgressRecord.bodyFat !== null
+                      ? `${latestProgressRecord.bodyFat}%`
+                      : "Not recorded"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <span className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-[#0B192C]">
+                View progress
+              </span>
+            )}
           </div>
         </Link>
 
