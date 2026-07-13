@@ -11,6 +11,11 @@ public interface ClientPackageRepository extends JpaRepository<ClientPackage, Lo
 
     List<ClientPackage> findByTrainer(User trainer);
 
+    List<ClientPackage> findByTrainerAndClientOrderByCreatedAtDesc(
+            User trainer,
+            User client
+    );
+
     Optional<ClientPackage> findFirstByClientAndRemainingSessionsGreaterThanOrderByCreatedAtAsc(
             User client,
             Integer remainingSessions
