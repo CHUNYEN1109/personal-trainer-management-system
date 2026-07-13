@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { ClientPackage, getTrainerPackages } from "@/lib/api/api";
 
 export default function TrainerDashboardPage() {
   const router = useRouter();
   const { currentUser, isAuthenticated, isLoading, logout } = useAuth();
+  const [packages, setPackages] = useState<ClientPackage[]>([]);
+  const [isLoadingPackages, setIsLoadingPackages] = useState(true);
+  const [packageSummaryError, setPackageSummaryError] = useState("");
+
+  function getToken(): string | null {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return window.localStorage.getItem("authToken");
+  }
 
   useEffect(() => {
     if (isLoading) {
@@ -24,10 +36,65 @@ export default function TrainerDashboardPage() {
     }
   }, [currentUser, isAuthenticated, isLoading, router]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPackageSummary() {
+      if (isLoading || !isAuthenticated || currentUser?.role !== "TRAINER") {
+        if (!isLoading && isMounted) {
+          setIsLoadingPackages(false);
+        }
+        return;
+      }
+
+      try {
+        const token = getToken();
+
+        if (!token) {
+          if (isMounted) {
+            setPackageSummaryError("Unable to load package summary.");
+          }
+          return;
+        }
+
+        const data = await getTrainerPackages(token);
+
+        if (isMounted) {
+          setPackages(data);
+        }
+      } catch {
+        if (isMounted) {
+          setPackageSummaryError("Unable to load package summary.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingPackages(false);
+        }
+      }
+    }
+
+    void loadPackageSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser, isAuthenticated, isLoading]);
+
   function handleLogout() {
     logout();
     router.push("/");
   }
+
+  const totalPackages = packages.length;
+  const totalSessionsSold = packages.reduce(
+    (total, clientPackage) => total + clientPackage.totalSessions,
+    0,
+  );
+  const totalRemainingSessions = packages.reduce(
+    (total, clientPackage) => total + clientPackage.remainingSessions,
+    0,
+  );
+  const totalUsedSessions = totalSessionsSold - totalRemainingSessions;
 
   if (isLoading) {
     return (
@@ -57,8 +124,9 @@ export default function TrainerDashboardPage() {
         </h1>
 
         <p className="mb-8 text-sm leading-6 text-[#E0E0E0]">
-          This is the trainer dashboard. Trainers can create available slots and
-          manage client bookings here.
+          This is the trainer dashboard. Trainers can create available slots,
+          manage client bookings, review packages, and track client progress
+          here.
         </p>
 
         <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -90,6 +158,69 @@ export default function TrainerDashboardPage() {
             Manage Progress
           </Link>
         </div>
+
+        <Link
+          href="/trainer/packages"
+          className="mb-8 block rounded-lg border border-cyan-300/30 bg-cyan-300/10 p-5 transition hover:border-cyan-300 hover:bg-cyan-300/15"
+        >
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">
+                  Package Summary
+                </p>
+
+                <h2 className="mt-2 text-2xl font-semibold text-white">
+                  {isLoadingPackages
+                    ? "Loading packages..."
+                    : packageSummaryError
+                      ? "Package summary unavailable"
+                      : `${totalPackages} packages created`}
+                </h2>
+
+                <p className="mt-2 text-sm text-[#E0E0E0]">
+                  Review sold sessions, remaining sessions, and package usage.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-[#0B192C]">
+                View packages
+              </span>
+            </div>
+
+            {!isLoadingPackages && !packageSummaryError && (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Packages</p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {totalPackages}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Sessions sold</p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {totalSessionsSold}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Remaining</p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {totalRemainingSessions}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0B192C]/60 px-4 py-3">
+                  <p className="text-xs text-[#E0E0E0]">Used</p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {totalUsedSessions}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </Link>
 
         <div className="mb-8 rounded-lg border border-white/10 bg-white/5 p-5">
           <p className="mb-2 text-sm">
