@@ -8,9 +8,14 @@ export type DashboardNavItem = {
 type DashboardSidebarProps = {
   title: string;
   navItems: DashboardNavItem[];
+  brandLabel?: string;
 };
 
-export function DashboardSidebar({ title, navItems }: DashboardSidebarProps) {
+export function DashboardSidebar({
+  title,
+  navItems,
+  brandLabel = "Trainer Hub",
+}: DashboardSidebarProps) {
   return (
     <aside className="hidden w-72 shrink-0 border-r border-white/10 bg-[#071225] px-5 py-6 lg:block">
       <Link href="/" className="mb-8 flex items-center gap-3">
@@ -19,7 +24,7 @@ export function DashboardSidebar({ title, navItems }: DashboardSidebarProps) {
         </span>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white">
-            Trainer Hub
+            {brandLabel}
           </p>
           <p className="mt-1 text-xs text-[#A8B3C7]">{title}</p>
         </div>
