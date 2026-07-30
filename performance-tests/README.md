@@ -1,13 +1,15 @@
-# k6 Backend Performance Tests
+# k6 Booking Smoke Tests
 
-This directory contains the k6 performance-testing MVP for the Spring Boot backend of the Personal Trainer Management System.
+This directory contains k6 smoke tests for the booking functions in the Spring
+Boot backend of the Personal Trainer Management System.
 
-The current test suite covers:
+The smoke tests are organized by user role:
 
-- Backend health availability
-- Trainer authentication
-- JWT validation
-- Authenticated read-only API load testing
+- `smoke/client/` covers client booking actions
+- `smoke/trainer/` covers trainer booking actions
+
+Non-booking endpoints are used only as setup helpers when a booking flow needs
+temporary users or slots. They are not standalone smoke or load test targets.
 
 ## Project structure
 
@@ -17,269 +19,111 @@ performance-tests/
 ├── config/
 │   └── environment.js
 ├── helpers/
-│   └── auth.js
-├── smoke/
-│   ├── health-smoke.js
-│   └── login-smoke.js
-└── load/
-    └── authenticated-api-load.js
+│   ├── api.js
+│   ├── auth.js
+│   └── test-data.js
+├── run-all.sh
+└── smoke/
+    ├── client/
+    │   ├── bookings-cancel-patch.js
+    │   ├── bookings-get.js
+    │   └── bookings-post.js
+    └── trainer/
+        ├── bookings-complete-patch.js
+        ├── bookings-confirm-patch.js
+        ├── bookings-get.js
+        └── bookings-reject-patch.js
 ```
 
 ## Prerequisites
 
-Before running the tests, make sure the following tools and services are available:
-
 - k6
-- Java 21
+- Java 21 or later
 - MySQL
 - Spring Boot backend
-- A valid trainer test account
 
-Check the installed k6 version:
-
-```bash
-k6 version
-```
-
-On macOS, k6 can be installed with Homebrew:
-
-```bash
-brew install k6
-```
-
-## Start the backend
-
-From the repository root:
+Start the backend from the repository root:
 
 ```bash
 cd backend
 SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
 ```
 
-Keep the backend running while executing the k6 tests.
-
-Confirm that the backend is available:
+Confirm the backend is available:
 
 ```bash
 curl http://localhost:8080/actuator/health
 ```
 
-Expected response:
-
-```json
-{
-  "status": "UP"
-}
-```
-
 ## Environment variables
 
-The tests use environment variables instead of storing credentials in source control.
+| Variable   | Description             | Default                 |
+| ---------- | ----------------------- | ----------------------- |
+| `BASE_URL` | Spring Boot backend URL | `http://localhost:8080` |
 
-| Variable           | Description                   | Example                 |
-| ------------------ | ----------------------------- | ----------------------- |
-| `BASE_URL`         | Spring Boot backend URL       | `http://localhost:8080` |
-| `TRAINER_EMAIL`    | Trainer test account email    | `trainer@example.com`   |
-| `TRAINER_PASSWORD` | Trainer test account password | Local test password     |
+Do not commit real passwords, JWT tokens, database credentials, or production
+secrets. These smoke tests create disposable `k6-*` users and records for each
+run.
 
-> Do not commit real passwords, JWT tokens, database credentials, or production secrets.
+## Run all tests
 
-## Health smoke test
-
-The health smoke test checks that:
-
-- The backend is reachable
-- `GET /actuator/health` returns HTTP `200`
-- The backend status is `UP`
-- The response time remains below the configured threshold
-
-Run from the repository root:
+From the repository root:
 
 ```bash
-k6 run performance-tests/smoke/health-smoke.js
+./performance-tests/run-all.sh
 ```
 
-Run with an explicit backend URL:
+`run-all.sh` automatically runs every booking smoke test under `smoke/client/`
+and `smoke/trainer/`.
+
+## Run one booking test
+
+Each booking API has its own k6 file. Example:
 
 ```bash
 k6 run \
   -e BASE_URL=http://localhost:8080 \
-  performance-tests/smoke/health-smoke.js
+  performance-tests/smoke/client/bookings-post.js
 ```
 
-## Trainer login smoke test
+## Client Booking Smoke Tests
 
-The login smoke test checks that:
+| File | API |
+| ---- | --- |
+| `smoke/client/bookings-post.js` | `POST /api/client/bookings` |
+| `smoke/client/bookings-get.js` | `GET /api/client/bookings` |
+| `smoke/client/bookings-cancel-patch.js` | `PATCH /api/client/bookings/{bookingId}/cancel` |
 
-- `POST /api/auth/login` returns HTTP `200`
-- The response contains a JWT token
-- The authenticated user role is `TRAINER`
-- The login response time remains below the configured threshold
+## Trainer Booking Smoke Tests
 
-Run:
+| File | API |
+| ---- | --- |
+| `smoke/trainer/bookings-get.js` | `GET /api/trainer/bookings` |
+| `smoke/trainer/bookings-confirm-patch.js` | `PATCH /api/trainer/bookings/{bookingId}/confirm` |
+| `smoke/trainer/bookings-reject-patch.js` | `PATCH /api/trainer/bookings/{bookingId}/reject` |
+| `smoke/trainer/bookings-complete-patch.js` | `PATCH /api/trainer/bookings/{bookingId}/complete` |
 
-```bash
-k6 run \
-  -e BASE_URL=http://localhost:8080 \
-  -e TRAINER_EMAIL=trainer@example.com \
-  -e TRAINER_PASSWORD='your-local-test-password' \
-  performance-tests/smoke/login-smoke.js
-```
+## Thresholds
 
-## Authenticated API load test
-
-The authenticated load test:
-
-1. Logs in once during the k6 `setup()` phase
-2. Extracts the JWT token
-3. Sends authenticated requests to `GET /api/auth/me`
-4. Gradually increases the load to five virtual users
-5. Validates the returned trainer identity and role
-
-Run:
-
-```bash
-k6 run \
-  -e BASE_URL=http://localhost:8080 \
-  -e TRAINER_EMAIL=trainer@example.com \
-  -e TRAINER_PASSWORD='your-local-test-password' \
-  performance-tests/load/authenticated-api-load.js
-```
-
-## Current load profile
-
-The authenticated load test uses the following stages:
-
-| Duration   | Target virtual users | Purpose                    |
-| ---------- | -------------------: | -------------------------- |
-| 10 seconds |                    2 | Ramp up                    |
-| 20 seconds |                    5 | Maintain and increase load |
-| 10 seconds |                    0 | Ramp down                  |
-
-A one-second sleep is included between iterations to simulate a basic user pause and avoid generating an unrealistic request loop.
-
-## Current thresholds
-
-### Health test
-
-- Check success rate must be `100%`
-- HTTP request failure rate must be below `1%`
-- 95% of health requests must complete in under `500 ms`
-
-### Login test
-
-- Check success rate must be `100%`
-- HTTP request failure rate must be below `1%`
-- 95% of login requests must complete in under `1000 ms`
-
-### Authenticated API load test
-
-- Check success rate must be above `99%`
-- HTTP request failure rate must be below `1%`
-- 95% of login requests must complete in under `1000 ms`
-- 95% of `GET /api/auth/me` requests must complete in under `500 ms`
+- Booking smoke tests require `100%` checks passing
+- Booking smoke tests require `http_req_failed < 1%`
+- Booking smoke tests require request p95 below `1000 ms`
 
 If a threshold is exceeded, k6 exits with a failure status.
 
-## Understanding the results
+## Recommendation
 
-Important k6 metrics include:
+Keep booking flows as smoke tests first. Booking endpoints mutate data and have
+state transitions, so broad load testing can create noisy results unless the
+database is seeded and cleaned in a controlled way.
 
-### `checks`
-
-Shows whether response validations passed.
-
-Example:
-
-```text
-checks: 100.00%
-```
-
-### `http_req_failed`
-
-Shows the percentage of failed HTTP requests.
-
-Example:
-
-```text
-http_req_failed: 0.00%
-```
-
-### `http_req_duration`
-
-Shows request response times.
-
-Important values include:
-
-- `avg`: average response time
-- `med`: median response time
-- `p(90)`: 90% of requests completed below this value
-- `p(95)`: 95% of requests completed below this value
-- `max`: slowest request
-
-The `p(95)` value is generally more useful than the average because it reveals how most users experience the API while still including slower requests.
-
-### `iterations`
-
-Shows how many times the default test function completed.
-
-### `vus`
-
-Shows the number of active virtual users.
-
-### `http_reqs`
-
-Shows the total number of HTTP requests sent.
-
-## Initial MVP results
-
-The initial local authenticated API load test completed successfully with:
-
-| Metric                       |               Result |
-| ---------------------------- | -------------------: |
-| Maximum virtual users        |                    5 |
-| Completed iterations         |                  101 |
-| HTTP requests                |                  102 |
-| Failed requests              |                   0% |
-| Checks passed                |            306 / 306 |
-| `GET /api/auth/me` p(95)     |  Approximately 20 ms |
-| `POST /api/auth/login` p(95) | Approximately 111 ms |
-
-> These numbers are local development results and should not be treated as production capacity measurements.
+If booking performance testing is needed later, add a separate low-rate scenario
+that uses seeded slots and explicit cleanup. That keeps smoke tests fast while
+still giving useful performance data.
 
 ## Safety notes
 
-- Do not run load tests against production without explicit approval
-- Use dedicated test accounts
-- Prefer read-only endpoints during early load testing
+- Do not run these tests against production without explicit approval
 - Avoid committing credentials or JWT tokens
 - Avoid using real customer data
-- Start with small loads and increase gradually
-- Monitor the backend and database while testing
-
-## Current limitations
-
-The MVP currently:
-
-- Uses one trainer account
-- Shares one JWT token across load-test virtual users
-- Tests only one authenticated read-only endpoint
-- Runs locally
-- Does not test the Next.js UI
-- Does not include stress, spike, or soak testing
-- Does not export metrics to Grafana or another monitoring platform
-
-## Future improvements
-
-Possible next steps include:
-
-- Add separate trainer and client scenarios
-- Add multiple test accounts
-- Add trainer dashboard read tests
-- Add booking workflow tests
-- Add concurrent booking tests
-- Add stress and spike scenarios
-- Add test-data setup and cleanup
-- Add GitHub Actions smoke testing
-- Export metrics to Grafana Cloud or Prometheus
-- Add browser-level testing for selected UI journeys
+- Reset or clean the local database when repeated test data becomes noisy

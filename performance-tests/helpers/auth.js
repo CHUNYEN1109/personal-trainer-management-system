@@ -1,10 +1,10 @@
 import http from "k6/http";
 import { check } from "k6";
 
-export function login(baseUrl, email, password) {
+export function login(baseUrl, email, password, expectedRole = "TRAINER") {
   if (!email || !password) {
     throw new Error(
-      "TRAINER_EMAIL and TRAINER_PASSWORD environment variables are required",
+      "Email and password are required for login",
     );
   }
 
@@ -42,13 +42,13 @@ export function login(baseUrl, email, password) {
       }
     },
 
-    "login response role is TRAINER": (res) => {
+    [`login response role is ${expectedRole}`]: (res) => {
       if (res.status !== 200 || !res.body) {
         return false;
       }
 
       try {
-        return res.json("role") === "TRAINER";
+        return res.json("role") === expectedRole;
       } catch {
         return false;
       }
@@ -67,6 +67,73 @@ export function login(baseUrl, email, password) {
 
   return {
     token,
+    response,
+  };
+}
+
+export function register(baseUrl, email, password, username, role) {
+  const payload = JSON.stringify({
+    email,
+    password,
+    username,
+    role,
+  });
+
+  const response = http.post(
+    `${baseUrl}/api/auth/register`,
+    payload,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      tags: {
+        name: "POST /api/auth/register",
+      },
+    },
+  );
+
+  const registerPassed = check(response, {
+    [`register ${role} returns 201`]: (res) => res.status === 201,
+
+    [`register response role is ${role}`]: (res) => {
+      if (res.status !== 201 || !res.body) {
+        return false;
+      }
+
+      try {
+        return res.json("role") === role;
+      } catch {
+        return false;
+      }
+    },
+
+    "register response contains token": (res) => {
+      if (res.status !== 201 || !res.body) {
+        return false;
+      }
+
+      try {
+        const token = res.json("token");
+        return typeof token === "string" && token.length > 0;
+      } catch {
+        return false;
+      }
+    },
+  });
+
+  if (!registerPassed || response.status !== 201) {
+    console.error(
+      `Registration failed. Status: ${response.status}, body: ${response.body}`,
+    );
+
+    return null;
+  }
+
+  return {
+    id: response.json("id"),
+    email: response.json("email"),
+    role: response.json("role"),
+    token: response.json("token"),
     response,
   };
 }
