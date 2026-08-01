@@ -65,7 +65,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(
                 List.of(
                         "http://localhost:3000",
-                        frontendUrl
+                        frontendUrl,
+                        "https://aims-driving-stage-parent.trycloudflare.com"
                 )
         );
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
