@@ -65,6 +65,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(
                 List.of(
                         "http://localhost:3000",
+                        "https://chunyen1109.github.io",
                         frontendUrl,
                         "https://aims-driving-stage-parent.trycloudflare.com"
                 )

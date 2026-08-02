@@ -8,7 +8,7 @@ Use the app here:
 
 Backend API health check:
 
-[https://dom-mounted-applying-advancement.trycloudflare.com/actuator/health](https://dom-mounted-applying-advancement.trycloudflare.com/actuator/health)
+[https://add-min-patent-translated.trycloudflare.com/actuator/health](https://add-min-patent-translated.trycloudflare.com/actuator/health)
 
 ## Important Note
 
