@@ -19,3 +19,7 @@ machine.
 
 For a permanent public URL, deploy the frontend and backend to cloud hosting and
 move the database to a managed MySQL service.
+
+Backend cloud deployment notes:
+
+[backend/DEPLOYMENT.md](backend/DEPLOYMENT.md)

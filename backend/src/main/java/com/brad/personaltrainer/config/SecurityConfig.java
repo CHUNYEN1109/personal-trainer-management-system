@@ -1,5 +1,8 @@
 package com.brad.personaltrainer.config;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
@@ -22,6 +25,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     @Value("${frontend.url:http://localhost:3000}")
     private String frontendUrl;
+    @Value("${cors.allowed-origins:}")
+    private String allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -62,14 +67,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(
-                List.of(
-                        "http://localhost:3000",
-                        "https://chunyen1109.github.io",
-                        frontendUrl,
-                        "https://aims-driving-stage-parent.trycloudflare.com"
-                )
-        );
+        configuration.setAllowedOrigins(resolveAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
@@ -77,5 +75,22 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private List<String> resolveAllowedOrigins() {
+        LinkedHashSet<String> origins = new LinkedHashSet<>();
+        origins.add("http://localhost:3000");
+        origins.add("http://localhost:3001");
+        origins.add("https://chunyen1109.github.io");
+        origins.add(frontendUrl);
+
+        if (allowedOrigins != null && !allowedOrigins.isBlank()) {
+            Arrays.stream(allowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(origin -> !origin.isBlank())
+                    .forEach(origins::add);
+        }
+
+        return new ArrayList<>(origins);
     }
 }
