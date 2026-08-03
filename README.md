@@ -8,17 +8,12 @@ Use the app here:
 
 Backend API health check:
 
-[https://add-min-patent-translated.trycloudflare.com/actuator/health](https://add-min-patent-translated.trycloudflare.com/actuator/health)
+[https://backend-production-3db4.up.railway.app/actuator/health](https://backend-production-3db4.up.railway.app/actuator/health)
 
 ## Important Note
 
-The frontend is deployed with GitHub Pages. The backend API is currently served
-through a temporary Cloudflare Tunnel, so API features will only work while the
-local backend, MySQL database, and tunnel process are running on the host
-machine.
-
-For a permanent public URL, deploy the frontend and backend to cloud hosting and
-move the database to a managed MySQL service.
+The frontend is deployed with GitHub Pages. The backend API and MySQL database
+are deployed on Railway.
 
 Backend cloud deployment notes:
 

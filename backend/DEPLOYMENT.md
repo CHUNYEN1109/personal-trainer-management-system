@@ -58,3 +58,9 @@ NEXT_PUBLIC_API_BASE_URL=<your-cloud-backend-url>
 ```
 
 Commit and push to redeploy the frontend.
+
+Current Railway backend URL:
+
+```text
+https://backend-production-3db4.up.railway.app
+```
