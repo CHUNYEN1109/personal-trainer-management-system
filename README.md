@@ -1,20 +1,86 @@
-# Personal Trainer Management System
+Personal Trainer Management System
 
-## Live Demo
+A web-based Personal Trainer Management System developed as a Final Year Project (FYP).
 
-Use the app here:
+The system provides user authentication and supports personal training management activities.
 
-[https://chunyen1109.github.io/personal-trainer-management-system/](https://chunyen1109.github.io/personal-trainer-management-system/)
+Live Demo
 
-Backend API health check:
+Access the application here:
 
-[https://backend-production-3db4.up.railway.app/actuator/health](https://backend-production-3db4.up.railway.app/actuator/health)
+Frontend (GitHub Pages):
 
-## Important Note
+https://chunyen1109.github.io/personal-trainer-management-system/
 
-The frontend is deployed with GitHub Pages. The backend API and MySQL database
-are deployed on Railway.
+Backend API Health Check (Cloudflare Tunnel):
 
-Backend cloud deployment notes:
+https://comfort-bulletin-toe-lined.trycloudflare.com/actuator/health
 
-[backend/DEPLOYMENT.md](backend/DEPLOYMENT.md)
+A successful backend health check returns:
+
+{
+  "status": "UP"
+}
+
+Technology Stack
+
+Frontend
+
+* Next.js
+* React
+* TypeScript
+* GitHub Pages
+
+Backend
+
+* Java 21
+* Spring Boot
+* REST API
+* JWT Authentication
+
+Database
+
+* MySQL
+
+Deployment
+
+* Frontend: GitHub Pages
+* Backend: Locally hosted on macOS
+* Backend HTTPS access: Cloudflare Quick Tunnel
+* Database: Local MySQL
+
+System Architecture
+
+User / Web Browser
+        |
+        v
+GitHub Pages (Next.js Frontend)
+        |
+        v
+Cloudflare Quick Tunnel (HTTPS)
+        |
+        v
+Spring Boot Backend (localhost:8080)
+        |
+        v
+MySQL Database (Local)
+
+Important Note
+
+The frontend is deployed publicly using GitHub Pages.
+
+The backend API and MySQL database are currently hosted locally on the developer’s Mac and exposed through Cloudflare Quick Tunnel.
+
+The backend is only accessible while the developer’s Mac, Spring Boot application, MySQL database, and Cloudflare Tunnel are running.
+
+Cloudflare Quick Tunnel generates a temporary public URL. If the tunnel is restarted, the URL may change, requiring the frontend API configuration to be updated and redeployed.
+
+The frontend can remain accessible on GitHub Pages even when the backend is offline, but features requiring API access will not work.
+
+Deployment Documentation
+
+Backend deployment notes:
+
+backend/DEPLOYMENT.md
+
+Note: The deployment documentation may contain instructions for the previous Railway deployment and should be treated as historical information until updated.
