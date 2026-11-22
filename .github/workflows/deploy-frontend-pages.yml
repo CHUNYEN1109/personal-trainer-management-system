@@ -47,7 +47,7 @@ jobs:
         working-directory: frontend
         env:
           GITHUB_PAGES: "true"
-          NEXT_PUBLIC_API_BASE_URL: https://backend-production-3db4.up.railway.app
+          NEXT_PUBLIC_API_BASE_URL: https://comfort-bulletin-toe-lined.trycloudflare.com
         run: pnpm build
 
       - name: Add GitHub Pages marker
